@@ -18,3 +18,4 @@ altes_projekt/01. Bildanalyse/02. models/02. DEX
 *.pyc
 altes_projekt/02. Tonanalyse/Acoustic_Indices/00 Quellcode
 altes_projekt/01. Bildanalyse/02. models/03. emotion_model
+venv

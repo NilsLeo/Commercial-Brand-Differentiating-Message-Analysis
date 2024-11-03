@@ -8,8 +8,9 @@ This Project aims to provide a Framework which can be used to analyse a commerci
 ---
 
 # Installation/Usage
+## Libraries
 
-## Age and Gender Models
+### Age and Gender Models
 
 These models have been omitted from Version Control due to their filesize.Download them like so (Linux/ MAC OS)^[https://raw.githubusercontent.com/josemarcosrf/Age-Gender-Estimation-example/refs/heads/master/download_models.sh]:
 
@@ -22,7 +23,7 @@ wget https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/age.prototxt
 wget https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/gender.caffemodel
 wget https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/gender.prototxt
 ```
-## Acoustic Indices Library
+### Acoustic Indices Library
 
 The Acoustic Indices Library can be added to this Project Like So:
 ```bash
@@ -31,7 +32,7 @@ cd "altes_projekt/02. Tonanalyse/Acoustic_Indices"
 git clone git@github.com:patriceguyot/Acoustic_Indices.git "./00 Quellcode"
 
 ```
-## Face Classification Library
+### Face Classification Library
 ```bash
 cd "altes_projekt/01. Bildanalyse/02. models"
 
@@ -58,3 +59,12 @@ Resources/
 
 
 This [Spreadsheet](./SB_AD_LIST__2013-2022.xlsx) contains some metadata and indicates whether or not the add contains a BDM based on human feedback.
+
+
+## Python Dependencies
+```bash
+# create virtual environment
+python -m venv venv
+source venv/bin/activate
+pip install -r ./requirements.txt
+```
