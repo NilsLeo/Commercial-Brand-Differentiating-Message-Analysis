@@ -1,2 +1,17 @@
 Resources/Ads/*
 altes_projekt/02. Tonanalyse/Tonanalyse 1/Geschlechtserkennung/splitted_audios
+altes_projekt/03. Output Bild + Ton/01. output_lists
+altes_projekt/02. Tonanalyse/Tonanalyse 1/Stimmungsanalyse/Audio_&_TXT_Dateien
+altes_projekt/02. Tonanalyse/Geschlechtserkennung/splitted_audios
+altes_projekt/02. Tonanalyse/Stimmungsanalyse/Audio_&_TXT_Dateien
+altes_projekt/02. Tonanalyse/Stimmungsanalyse/JSON_Dateien
+*.DS_STORE
+
+altes_projekt/Superbowl Ad Analysis Report.pdf
+altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_10
+altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_15
+altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_20
+altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_25
+altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/all_ads_Intervall_10.xlsx
+altes_projekt/01. Bildanalyse/02. models/03. emotion_model/trained_model
+altes_projekt/01. Bildanalyse/02. models/02. DEX
