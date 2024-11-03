@@ -38,7 +38,7 @@ cd "altes_projekt/01. Bildanalyse/02. models"
 git clone git@github.com:oarriaga/face_classification.git "./03. emotion_model"
 ```
 
-## Structure
+## Videos
 
 The [Resources](./Resources) Directory should Contain the Raw Commercial Files from 2013 to 2022. In order to keep the filesize of this repo small, thees have been omitted and must be obtained separately and need to be placed in the folder structure manually like so:
 
@@ -57,4 +57,4 @@ Resources/
 ```
 
 
-This [Spreadsheet](./Resources/CSV/SB_AD_LIST__2013-2022.xlsx) contains some metadata and indicates whether or not the add contains a BDM based on human feedback.
+This [Spreadsheet](./SB_AD_LIST__2013-2022.xlsx) contains some metadata and indicates whether or not the add contains a BDM based on human feedback.
