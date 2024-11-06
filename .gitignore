@@ -1,21 +1,27 @@
 Resources/Ads/*
-altes_projekt/02. Tonanalyse/Tonanalyse 1/Geschlechtserkennung/splitted_audios
-altes_projekt/03. Output Bild + Ton/01. output_lists
-altes_projekt/02. Tonanalyse/Tonanalyse 1/Stimmungsanalyse/Audio_&_TXT_Dateien
-altes_projekt/02. Tonanalyse/Geschlechtserkennung/splitted_audios
-altes_projekt/02. Tonanalyse/Stimmungsanalyse/Audio_&_TXT_Dateien
-altes_projekt/02. Tonanalyse/Stimmungsanalyse/JSON_Dateien
+01_input_frames_all/*
+Final_Files/01. Bildanalyse/02. models/02. DEX
+Final_Files/01. Bildanalyse/01. input_files/
+Final_Files/01. Bildanalyse/04. output_frames/
+Final_Files/01. Bildanalyse/02. models/03. emotion_model
+Final_Files/02. Tonanalyse/Tonanalyse 1/Geschlechtserkennung/splitted_audios
+Final_Files/02. Tonanalyse/Acoustic_Indices/00 Quellcode
+Final_Files/02. Tonanalyse/Tonanalyse 1/Stimmungsanalyse/Audio_&_TXT_Dateien
+Final_Files/02. Tonanalyse/Geschlechtserkennung/splitted_audios
+Final_Files/02. Tonanalyse/Stimmungsanalyse/Audio_&_TXT_Dateien
+Final_Files/02. Tonanalyse/Stimmungsanalyse/JSON_Dateien
+Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_10
+Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_15
+Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_20
+Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_25
+Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/all_ads_Intervall_10.xlsx
+Final_Files/03. Output Bild + Ton/01. output_lists
 *.DS_STORE
 *.DS_Store
 
-altes_projekt/Superbowl Ad Analysis Report.pdf
-altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_10
-altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_15
-altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_20
-altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_25
-altes_projekt/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/all_ads_Intervall_10.xlsx
-altes_projekt/01. Bildanalyse/02. models/02. DEX
+Superbowl Ad Analysis Report.pdf
+
+
 *.pyc
-altes_projekt/02. Tonanalyse/Acoustic_Indices/00 Quellcode
-altes_projekt/01. Bildanalyse/02. models/03. emotion_model
+
 venv
