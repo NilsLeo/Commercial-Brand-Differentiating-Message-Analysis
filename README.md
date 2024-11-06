@@ -66,6 +66,7 @@ This [Spreadsheet](./SB_AD_LIST__2013-2022.xlsx) contains some metadata and indi
 # create virtual environment
 python -m venv venv
 source venv/bin/activate
+# Windows venv\Scripts\activate
 pip install -r ./requirements.txt
 ```
 ---
