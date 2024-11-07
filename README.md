@@ -73,6 +73,13 @@ python -m venv venv
 source venv/bin/activate
 # Windows venv\Scripts\activate
 pip install -r ./requirements.txt
+ipython kernel install --user --name=bdm_project
+```
+
+After creating venv install pytorch 
+
+```
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
 ---
