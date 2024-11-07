@@ -68,19 +68,12 @@ This [Spreadsheet](./SB_AD_LIST__2013-2022.xlsx) contains some metadata and indi
 ## Python Dependencies
 
 ```bash
-# create virtual environment
 python -m venv venv
 source venv/bin/activate
-# Windows venv\Scripts\activate
+pip install torch torchvision torchaudio
 pip install -r ./requirements.txt
-ipython kernel install --user --name=bdm_project
 ```
 
-After creating venv install pytorch 
-
-```
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-```
 
 ---
 
