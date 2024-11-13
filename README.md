@@ -8,58 +8,123 @@ This Project aims to provide a Framework which can be used to analyse a commerci
 
 ---
 
+# Prerequisites
+
+- python
+- virtualenv `pip install virtualenv`
+```bash
+sudo apt install libportaudio2 -y
+sudo apt install python3-pyaudio -y
+sudo apt install portaudio19-dev -y
+sudo apt install python3-dev -y
+```
+
+- A hugging face api key in your bashrc or zshrc `export HF_API_KEY="hf....."`
+<!-- - docker -->
+
 # Installation/Usage
-## Files
-Projektdateien von Onedrive runterladen und hier entpacken
 
-## Libraries
+Generate the .env File using [this script](./setup/generate_env_vars.py) while making sure you are running it from the root dir aka `python ./setup/generate_env_vars.py`
 
-### Age and Gender Models
-
-These models have been omitted from Version Control due to their filesize.Download them like so (Linux/ MAC OS)^[https://raw.githubusercontent.com/josemarcosrf/Age-Gender-Estimation-example/refs/heads/master/download_models.sh]:
-
-```bash
-cd "Final_Files/01. Bildanalyse/02. models"
-mkdir "02. DEX"
-cd "02. DEX"
-wget https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/dex_chalearn_iccv2015.caffemodel
-wget https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/age.prototxt
-wget https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/gender.caffemodel
-wget https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/gender.prototxt
-```
-
-### Acoustic Indices Library
-
-The Acoustic Indices Library can be added to this Project Like So:
-
-```bash
-cd "Final_Files/02. Tonanalyse/Acoustic_Indices"
-
-git clone git@github.com:patriceguyot/Acoustic_Indices.git "./00 Quellcode"
-
-```
-
-### Face Classification Library
-
-```bash
-cd "Final_Files/01. Bildanalyse/02. models"
-
-git clone git@github.com:oarriaga/face_classification.git "./03. emotion_model"
-```
-
-## Videos
+Download Files too large to track in gitignore using [this script](./setup/download_gitignore_files.py)
 
 
-This [Spreadsheet](./SB_AD_LIST__2013-2022.xlsx) contains some metadata and indicates whether or not the add contains a BDM based on human feedback.
+convert the mp4s to wav using [this script](./setup/mp4_to_wav.py)
 
-## Python Dependencies
+
+Then install a virtual environment
 
 ```bash
 python -m venv venv
+```
+Activate the virtual Environment:
+
+## MacOS/ Linux
+```bash
 source venv/bin/activate
+```
+## Windows
+```powershell
+.\venv\Scripts\activate
+```
+This allows for an environment with separate dependencies and packages from Host OS. Execute this everytime you make changes to the project.
+
+The codebase was developed on the Following System
+
+```bash
+OS: Ubuntu 24.04.1 LTS x86_64 
+Host: MS-7E07 1.0 
+Kernel: 6.8.0-48-generic
+Shell: zsh 5.9 
+CPU: 13th Gen Intel i7-13700K (24) @ 5.500GHz 
+GPU: Intel Raptor Lake-S GT1 [UHD Graphics 770] 
+NVIDIA GeForce RTX 4070 
+Memory: 7400MiB / 64042MiB 
+```
+
+The System-specific dependencies are as follows and may need to be installed differently based the systems specs, especially when using a different gpu (or lack thereof)
+
+```bash
 pip install torch torchvision torchaudio
+pip install tensorflow\[and-cuda\]
+```
+
+The remaining dependencies should be installable irrespective of Operating System or hardware
+
+
+```bash
 pip install -r ./requirements.txt
 ```
+
+Execute all of the following notebooks in the following order. If there are no Errors, all necessary dependencies are installed and the project works
+
+- [Bildanalyse MAIN Script](./Final_Files/01.%20Bildanalyse/03.%20main_Script/03.%20main_Bildanalyse%20copy.ipynb)
+- [Heatmap_Bildkomposition.ipynb](./Final_Files/01.%20Bildanalyse/05.%20Heatmaps_Bildkomposition/Heatmap_Bildkomposition.ipynb)
+- [Manuelle Prüfung der Indices](./Final_Files/02.%20Tonanalyse/Acoustic_Indices/01%20Manueller%20Vergleich/00%20Manuelle%20Prüfung%20der%20Indices.ipynb)
+- [Tonanalyse MAIN Script](./Final_Files/02.%20Tonanalyse/main_sound_recognition_FINAL.ipynb)
+- [End Datei Code](./Final_Files/03.%20Output%20Bild%20+%20Ton/02.%20Final%20Excel%20File/End_Datei_Code.ipynb)
+- [Identifikation der Attribute](./Final_Files/04.%20Ergebnisse/04.01.%20Identifikation%20der%20Attribute.ipynb)
+- [Beste Werbespots](./Final_Files/04.%20Ergebnisse/04.02.%20Beste%20Werbespots.ipynb) 
+
+### Komplettes Skript
+
+```sh
+# deletes every .gitignore file as they will be regenerated
+find . -name ".gitignore" -execdir rm -f {} \;
+
+
+cp .env "./Final_Files/01. Bildanalyse/03. main_Script/" 
+cd "./Final_Files/01. Bildanalyse/03. main_Script/"
+python -m venv venv
+source ./venv/bin/activate
+pip install -r "03. main_Bildanalyse.requirements.txt"
+jupyter nbconvert --to notebook --execute "./03. main_Bildanalyse.ipynb" --inplace
+
+
+cd "./Final_Files/02. Tonanalyse"
+python -m venv venv
+source ./venv/bin/activate
+pip install -r "main_sound_recognition_FINAL.requirements.txt"
+jupyter nbconvert --to notebook --execute "./main_sound_recognition_FINAL" --inplace
+```
+
+
+```sh
+jupyter nbconvert --to notebook --execute "./Final_Files/01. Bildanalyse/05. Heatmaps_Bildkomposition/Heatmap_Bildkomposition.ipynb" --inplace
+jupyter nbconvert --to notebook --execute "./Final_Files/02. Tonanalyse/Acoustic_Indices/01 Manueller Vergleich/00 Manuelle Prüfung der Indices.ipynb" --inplace
+jupyter nbconvert --to notebook --execute "./Final_Files/02. Tonanalyse/main_sound_recognition_FINAL.ipynb" --inplace
+jupyter nbconvert --to notebook --execute "./Final_Files/03. Output Bild + Ton/02. Final Excel File/End_Datei_Code.ipynb" --inplace
+jupyter nbconvert --to notebook --execute "./Final_Files/04. Ergebnisse/04.01. Identifikation der Attribute.ipynb" --inplace
+jupyter nbconvert --to notebook --execute "./Final_Files/04. Ergebnisse/04.02. Beste Werbespots.ipynb" --inplace
+```
+# TODOS
+- [ ] You need to refactor the code in such a way that it simply receives an ad and a brand and completes all steps. This is the groundwork for the eventual full-stack project
+- [ ] Get rid of `!pip install` ans `%pip install`
+- [ ] clone the git repos in download_gitignore_files.py instead of jupyter notebooks
+- [ ] pip freeze once verything works
+- [ ] speed up testing by only keeping one add per year initially
+- [ ] write everything to one excel per ad vs. the original code which has multiple excel files for same ad
+- add folder 2024, place ad inside, and test it
 
 
 ---
