@@ -18,10 +18,18 @@ Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/al
 Final_Files/03. Output Bild + Ton/01. output_lists
 *.DS_STORE
 *.DS_Store
-
+.env
 Superbowl Ad Analysis Report.pdf
 
 
 *.pyc
 
 venv
+
+Projektdateien/*
+ADs/*
+ADs_wav/*
+ADs_Full/*
+Final_Files/02. Tonanalyse/.venv/*
+Final_Files/02. Tonanalyse/None/*
+Bessere_Version_Projektdateien.zip
