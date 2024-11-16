@@ -1,5 +1,5 @@
-Resources/Ads/*
-01_input_frames_all/*
+Resources/Ads
+01_input_frames_all
 Final_Files/01. Bildanalyse/02. models/02. DEX
 Final_Files/01. Bildanalyse/01. input_files/
 Final_Files/01. Bildanalyse/04. output_frames/
@@ -26,10 +26,12 @@ Superbowl Ad Analysis Report.pdf
 
 venv
 
-Projektdateien/*
-ADs/*
-ADs_wav/*
-ADs_Full/*
-Final_Files/02. Tonanalyse/.venv/*
-Final_Files/02. Tonanalyse/None/*
+Projektdateien
+ADs
+ADs_wav
+ADs_Full
+Final_Files/02. Tonanalyse/.venv
+Final_Files/02. Tonanalyse/None
 Bessere_Version_Projektdateien.zip
+Final_Files/01. Bildanalyse/03. main_Script/03. main_Bildanalyse-venv
+Final_Files/01. Bildanalyse/05. Heatmaps_Bildkomposition/Heatmap_Bildkomposition-venv
