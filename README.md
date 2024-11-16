@@ -17,6 +17,7 @@ sudo apt install libportaudio2 -y
 sudo apt install python3-pyaudio -y
 sudo apt install portaudio19-dev -y
 sudo apt install python3-dev -y
+pip install jupyter nbconvert
 ```
 
 - A hugging face api key in your bashrc or zshrc `export HF_API_KEY="hf....."`

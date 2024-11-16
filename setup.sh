@@ -163,9 +163,9 @@ setup_and_execute() {
 main_workflow() {
     # Uncomment generate_env_vars to ensure .env file exists
     generate_env_vars
-    # delete_gitignore_files
-    # download_files
-    # reduce_ads_selection
+    delete_gitignore_files
+    download_files
+    reduce_ads_selection
 
     setup_and_execute "./Final_Files/01. Bildanalyse/03. main_Script/" "03. main_Bildanalyse"
     # setup_and_execute "./Final_Files/01. Bildanalyse/05. Heatmaps_Bildkomposition/" "Heatmap_Bildkomposition"
