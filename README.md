@@ -1,9 +1,9 @@
 # Analysis Framework for Identifying Brand Differentiating Messages (BDM) in Commercials
-
+<center>
 <div style="text-align: center;">
   <img src="./Resources/images/SuperBowl.png" alt="Super Bowl" width="300"/>
 </div>
-
+</center>
 This Project aims to provide a Framework which can be used to analyse a commercial and identify whether or not this commercial contains a Brand Differentiating Message (BDM)
 
 ---
@@ -11,7 +11,7 @@ This Project aims to provide a Framework which can be used to analyse a commerci
 # Prerequisites
 
 - python
-- virtualenv `pip install virtualenv`
+- virtualenv `pip install virtualenv python-dotenv`
 ```bash
 sudo apt install libportaudio2 -y
 sudo apt install python3-pyaudio -y
@@ -20,33 +20,11 @@ sudo apt install python3-dev -y
 ```
 
 - A hugging face api key in your bashrc or zshrc `export HF_API_KEY="hf....."`
-<!-- - docker -->
 
 # Installation/Usage
 
-Generate the .env File using [this script](./setup/generate_env_vars.py) while making sure you are running it from the root dir aka `python ./setup/generate_env_vars.py`
-
-Download Files too large to track in gitignore using [this script](./setup/download_gitignore_files.py)
 
 
-convert the mp4s to wav using [this script](./setup/mp4_to_wav.py)
-
-
-Then install a virtual environment
-
-```bash
-python -m venv venv
-```
-Activate the virtual Environment:
-
-## MacOS/ Linux
-```bash
-source venv/bin/activate
-```
-## Windows
-```powershell
-.\venv\Scripts\activate
-```
 This allows for an environment with separate dependencies and packages from Host OS. Execute this everytime you make changes to the project.
 
 The codebase was developed on the Following System
@@ -88,35 +66,8 @@ Execute all of the following notebooks in the following order. If there are no E
 
 ### Komplettes Skript
 
-```sh
-# deletes every .gitignore file as they will be regenerated
-find . -name ".gitignore" -execdir rm -f {} \;
+Run [this Script](./setup.sh) to install and run the entire thing
 
-
-cp .env "./Final_Files/01. Bildanalyse/03. main_Script/" 
-cd "./Final_Files/01. Bildanalyse/03. main_Script/"
-python -m venv venv
-source ./venv/bin/activate
-pip install -r "03. main_Bildanalyse.requirements.txt"
-jupyter nbconvert --to notebook --execute "./03. main_Bildanalyse.ipynb" --inplace
-
-
-cd "./Final_Files/02. Tonanalyse"
-python -m venv venv
-source ./venv/bin/activate
-pip install -r "main_sound_recognition_FINAL.requirements.txt"
-jupyter nbconvert --to notebook --execute "./main_sound_recognition_FINAL" --inplace
-```
-
-
-```sh
-jupyter nbconvert --to notebook --execute "./Final_Files/01. Bildanalyse/05. Heatmaps_Bildkomposition/Heatmap_Bildkomposition.ipynb" --inplace
-jupyter nbconvert --to notebook --execute "./Final_Files/02. Tonanalyse/Acoustic_Indices/01 Manueller Vergleich/00 Manuelle Prüfung der Indices.ipynb" --inplace
-jupyter nbconvert --to notebook --execute "./Final_Files/02. Tonanalyse/main_sound_recognition_FINAL.ipynb" --inplace
-jupyter nbconvert --to notebook --execute "./Final_Files/03. Output Bild + Ton/02. Final Excel File/End_Datei_Code.ipynb" --inplace
-jupyter nbconvert --to notebook --execute "./Final_Files/04. Ergebnisse/04.01. Identifikation der Attribute.ipynb" --inplace
-jupyter nbconvert --to notebook --execute "./Final_Files/04. Ergebnisse/04.02. Beste Werbespots.ipynb" --inplace
-```
 # TODOS
 - [ ] You need to refactor the code in such a way that it simply receives an ad and a brand and completes all steps. This is the groundwork for the eventual full-stack project
 - [ ] Get rid of `!pip install` ans `%pip install`
