@@ -15,7 +15,8 @@ generate_env_vars() {
         echo "PYTORCH_NO_CUDA_MEMORY_CACHING=1"
         
         echo "ROOT_DIR=${ROOT_DIR}"
-        
+        declare -a years=("2013" "2014") 
+        echo "YEARS=${years[@]}"
         # 01_input_frames_all
         local INPUT_FRAMES_ALL_DIR="${ROOT_DIR}/01_input_frames_all"
         echo "INPUT_FRAMES_ALL=${INPUT_FRAMES_ALL_DIR}"
@@ -102,22 +103,23 @@ download_files() {
         "https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/gender.caffemodel"
         "https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/gender.prototxt"
     )
-    for url in "${urls[@]}"; do
-        wget -P "$BILDANALYSE_MODELS_DEX_DIR" "$url"
-    done
+    # for url in "${urls[@]}"; do
+    #     wget -P "$BILDANALYSE_MODELS_DEX_DIR" "$url"
+    # done
 
-    # Clone repositories
+    # # Clone repositories
+    # git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
+    # git clone "git@github.com:oarriaga/face_classification.git" "$BILDANALYSE_MODELS_EMOTION_DIR"
+    # git clone "git@github.com:x4nth055/gender-recognition-by-voice.git" "$TONANALYSE_AUDIO_GENDER_NOTEBOOKS_DIR"
     git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
-    git clone "git@github.com:oarriaga/face_classification.git" "$BILDANALYSE_MODELS_EMOTION_DIR"
-    git clone "git@github.com:x4nth055/gender-recognition-by-voice.git" "$TONANALYSE_AUDIO_GENDER_NOTEBOOKS_DIR"
 
-    # Download, unzip, and remove file
-    local download_url="https://box.fu-berlin.de/s/zwxKp8PXkCwAwGe/download"
-    local download_path="$ROOT_DIR/download"
+    # # Download, unzip, and remove file
+    # local download_url="https://box.fu-berlin.de/s/zwxKp8PXkCwAwGe/download"
+    # local download_path="$ROOT_DIR/download"
     
-    wget -O "$download_path" "$download_url"
-    unzip "$download_path" -d "$ROOT_DIR"
-    rm "$download_path"
+    # wget -O "$download_path" "$download_url"
+    # unzip "$download_path" -d "$ROOT_DIR"
+    # rm "$download_path"
 }
 
 reduce_ads_selection() {
@@ -159,15 +161,31 @@ setup_and_execute() {
     deactivate
     cd "$ROOT_DIR" || exit
 }
+convert_mp4_to_wav() {
+    find "$ADS_DIR" -type f -name "*.mp4" | while read -r src_path; do
+        # Create corresponding path in destination directory
+        dest_path="${src_path%.*}.wav"
+        
+        # Create destination directory if it doesn't exist
+        mkdir -p "$(dirname "$dest_path")"
+        
+        # Convert MP4 to WAV using ffmpeg
+        echo "Converting: $src_path -> $dest_path"
+        if ! ffmpeg -i "$src_path" "$dest_path" -y 2>/dev/null; then
+            echo "Error converting $src_path"
+        fi
+    done
+}
+
 
 main_workflow() {
     # Uncomment generate_env_vars to ensure .env file exists
     generate_env_vars
-    delete_gitignore_files
+    # delete_gitignore_files
     download_files
-    reduce_ads_selection
-
-    setup_and_execute "./Final_Files/01. Bildanalyse/03. main_Script/" "03. main_Bildanalyse"
+    # reduce_ads_selection
+    # convert_mp4_to_wav
+    # setup_and_execute "./Final_Files/01. Bildanalyse/03. main_Script/" "03. main_Bildanalyse"
     # setup_and_execute "./Final_Files/01. Bildanalyse/05. Heatmaps_Bildkomposition/" "Heatmap_Bildkomposition"
     # setup_and_execute "./Final_Files/02. Tonanalyse/main_sound_recognition_FINAL/" "main_sound_recognition_FINAL"
     # setup_and_execute "./Final_Files/02. Tonanalyse/Acoustic_Indices/01 Manueller Vergleich/" "01 Manueller Vergleich"

@@ -17,6 +17,7 @@ sudo apt install libportaudio2 -y
 sudo apt install python3-pyaudio -y
 sudo apt install portaudio19-dev -y
 sudo apt install python3-dev -y
+sudo apt install python3-pip
 pip install jupyter nbconvert
 ```
 
