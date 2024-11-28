@@ -29,9 +29,13 @@ generate_env_vars() {
         local ADS_DIR="${ROOT_DIR}/ADs"
         echo "ADS_DIR=${ADS_DIR}"
         
-        local ADS_WAV_DIR="${ROOT_DIR}/ADs_wav"
-        echo "ADS_WAV_DIR=${ADS_WAV_DIR}"
-        
+        # local ADS_WAV_DIR="${ROOT_DIR}/ADs_wav"
+        # echo "ADS_WAV_DIR=${ADS_WAV_DIR}"
+    
+        local BDM_EXCEL_FILE="${ADS_DIR}/SB_AD_LIST__2013-2022.xlsx"
+        echo "BDM_EXCEL_FILE=${BDM_EXCEL_FILE}"
+
+
         # Final_Files/01. Bildanalyse
         local BILDANALYSE_DIR="${FINAL_FILES_DIR}/01. Bildanalyse"
         echo "BILDANALYSE_DIR=${BILDANALYSE_DIR}"
@@ -82,6 +86,9 @@ generate_env_vars() {
         local OUTPUT_BILD_PLUS_TON_LISTS_DIR="${OUTPUT_BILD_PLUS_TON_DIR}/01. output_lists"
         echo "OUTPUT_BILD_PLUS_TON_LISTS_DIR=${OUTPUT_BILD_PLUS_TON_LISTS_DIR}"
         
+        local FINAL_EXCEL_FILE="${OUTPUT_BILD_PLUS_TON_DIR}/End_Datei.xlsx"
+        echo "FINAL_EXCEL_FILE=${FINAL_EXCEL_FILE}"
+
         # Final_Files/04. Ergebnisse
         local ERGEBNISSE_DIR="${FINAL_FILES_DIR}/04. Ergebnisse"
         echo "ERGEBNISSE_DIR=${ERGEBNISSE_DIR}"
@@ -103,23 +110,23 @@ download_files() {
         "https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/gender.caffemodel"
         "https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/static/gender.prototxt"
     )
-    # for url in "${urls[@]}"; do
-    #     wget -P "$BILDANALYSE_MODELS_DEX_DIR" "$url"
-    # done
+    for url in "${urls[@]}"; do
+        wget -P "$BILDANALYSE_MODELS_DEX_DIR" "$url"
+    done
 
-    # # Clone repositories
-    # git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
-    # git clone "git@github.com:oarriaga/face_classification.git" "$BILDANALYSE_MODELS_EMOTION_DIR"
-    # git clone "git@github.com:x4nth055/gender-recognition-by-voice.git" "$TONANALYSE_AUDIO_GENDER_NOTEBOOKS_DIR"
+    # Clone repositories
+    git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
+    git clone "git@github.com:oarriaga/face_classification.git" "$BILDANALYSE_MODELS_EMOTION_DIR"
+    git clone "git@github.com:x4nth055/gender-recognition-by-voice.git" "$TONANALYSE_AUDIO_GENDER_NOTEBOOKS_DIR"
     git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
 
-    # # Download, unzip, and remove file
-    # local download_url="https://box.fu-berlin.de/s/zwxKp8PXkCwAwGe/download"
-    # local download_path="$ROOT_DIR/download"
+    # Download, unzip, and remove file
+    local download_url="https://box.fu-berlin.de/s/zwxKp8PXkCwAwGe/download"
+    local download_path="$ROOT_DIR/download"
     
-    # wget -O "$download_path" "$download_url"
-    # unzip "$download_path" -d "$ROOT_DIR"
-    # rm "$download_path"
+    wget -O "$download_path" "$download_url"
+    unzip "$download_path" -d "$ROOT_DIR"
+    rm "$download_path"
 }
 
 reduce_ads_selection() {
@@ -162,36 +169,28 @@ setup_and_execute() {
     cd "$ROOT_DIR" || exit
 }
 convert_mp4_to_wav() {
-    find "$ADS_DIR" -type f -name "*.mp4" | while read -r src_path; do
-        # Create corresponding path in destination directory
-        dest_path="${src_path%.*}.wav"
-        
-        # Create destination directory if it doesn't exist
-        mkdir -p "$(dirname "$dest_path")"
-        
-        # Convert MP4 to WAV using ffmpeg
-        echo "Converting: $src_path -> $dest_path"
-        if ! ffmpeg -i "$src_path" "$dest_path" -y 2>/dev/null; then
-            echo "Error converting $src_path"
-        fi
+    # Find all MP4 files in the current directory and subdirectories
+    find . -type f -name "*.mp4" | while read -r video; do
+        # Create WAV filename by replacing .mp4 with .wav
+        wav_file="./${video%.mp4}.wav"
+        echo "Converting: $video to $wav_file"
+        # Added -y flag at the beginning to force overwrite
+        ffmpeg -y -i "./$video" -vn -acodec pcm_s16le -ar 44100 -ac 2 "$wav_file"
+
     done
 }
-
 
 main_workflow() {
     # Uncomment generate_env_vars to ensure .env file exists
     generate_env_vars
     # delete_gitignore_files
-    download_files
+    # download_files
     # reduce_ads_selection
     # convert_mp4_to_wav
     # setup_and_execute "./Final_Files/01. Bildanalyse/03. main_Script/" "03. main_Bildanalyse"
-    # setup_and_execute "./Final_Files/01. Bildanalyse/05. Heatmaps_Bildkomposition/" "Heatmap_Bildkomposition"
     # setup_and_execute "./Final_Files/02. Tonanalyse/main_sound_recognition_FINAL/" "main_sound_recognition_FINAL"
-    # setup_and_execute "./Final_Files/02. Tonanalyse/Acoustic_Indices/01 Manueller Vergleich/" "01 Manueller Vergleich"
     # setup_and_execute "./Final_Files/03. Output Bild + Ton/02. Final Excel File/ End_Datei_Code/" "End_Datei_Code"
-    # setup_and_execute "./Final_Files/04. Ergebnisse/ 04.01. Identifikation der Attribute/" "04.01. Identifikation der Attribute"
-    # setup_and_execute "./Final_Files/04. Ergebnisse/ 04.02. Beste Werbespots/" "04.02. Beste Werbespots"
+    setup_and_execute "./Neues_Projekt/" "BDM_Detection"
 }
 
 main_workflow
