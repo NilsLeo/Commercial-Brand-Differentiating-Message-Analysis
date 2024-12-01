@@ -215,7 +215,7 @@ huggingface-hub==0.26.2
 HyperPyYAML==1.2.2
 idna==3.10
 ipykernel==6.29.5
-ipython==7.34.0
+ipython
 ipywidgets==8.1.5
 jedi==0.19.2
 Jinja2==3.1.4
