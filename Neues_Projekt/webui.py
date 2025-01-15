@@ -3,6 +3,7 @@ import pandas as pd  # Add this import at the top
 from transcript import transcribe_video
 import os
 from ocr import ocr
+import text_analysis as ta
 # File uploader
 st.markdown("# Commercial Brand Differentiating Analysis Prediction Model")
 st.markdown("## Input Data")
@@ -49,7 +50,60 @@ st.info('The following words were detected in the frames of the file you uploade
 ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
 st.markdown(f"> {ocr_text}")
 
-st.write("### Final Overview of all Data")
+# Add Text Analysis section
+st.markdown("### Text Analysis")
+st.info('Here is the detailed analysis of the commercial transcript!', icon="📊")
+
+# Process text analysis for the single video
+word_count = len(ta.get_tokens(transcript))
+superlatives = ta.get_superlatives(transcript)
+comparatives = ta.get_comparatives(transcript)
+unique_words = ta.get_unique_words(transcript)
+
+# Calculate counts and percentages
+superlative_count = len(superlatives)
+comparative_count = len(comparatives)
+uniqueness_count = len(unique_words)
+
+superlative_pct = (superlative_count / word_count * 100) if word_count > 0 else 0
+comparative_pct = (comparative_count / word_count * 100) if word_count > 0 else 0
+uniqueness_pct = (uniqueness_count / word_count * 100) if word_count > 0 else 0
+total_bdm_terms = superlative_count + comparative_count + uniqueness_count
+total_bdm_pct = (total_bdm_terms / word_count * 100) if word_count > 0 else 0
+
+# Display results
+st.markdown("#### Word Statistics")
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric("Total Words", word_count)
+with col2:
+    st.metric("BDM Terms", total_bdm_terms)
+with col3:
+    st.metric("BDM Terms %", f"{total_bdm_pct:.1f}%")
+
+st.markdown("#### Detailed Analysis")
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown("**Superlatives**")
+    st.markdown(f"Count: {superlative_count} ({superlative_pct:.1f}%)")
+    st.markdown(f"> {', '.join(superlatives) if superlatives else 'None found'}")
+    
+    st.markdown("**Comparatives**")
+    st.markdown(f"Count: {comparative_count} ({comparative_pct:.1f}%)")
+    st.markdown(f"> {', '.join(comparatives) if comparatives else 'None found'}")
+
+with col2:
+    st.markdown("**Unique Words**")
+    st.markdown(f"Count: {uniqueness_count} ({uniqueness_pct:.1f}%)")
+    st.markdown(f"> {', '.join(unique_words) if unique_words else 'None found'}")
+
+# Update the DataFrame with the analysis results
+ad_df["superlatives"] = ', '.join(superlatives) if superlatives else ''
+ad_df["comparatives"] = ', '.join(comparatives) if comparatives else ''
+ad_df["unique_words"] = ', '.join(unique_words) if unique_words else ''
+ad_df["total_bdm_terms_pct"] = total_bdm_pct
+
+st.markdown("### Final Overview of all Data")
 st.write(ad_df)
 
 
