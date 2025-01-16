@@ -8,11 +8,13 @@ This Project aims to provide a Framework which can be used to analyse a commerci
 
 ---
 
-# Prerequisites
+# Prerequisites (for docker container later on)
 
 - python
 - virtualenv `pip install virtualenv python-dotenv`
+
 ```bash
+chmod +x ./setup.sh
 sudo apt install libportaudio2 -y
 sudo apt install python3-pyaudio -y
 sudo apt install portaudio19-dev -y

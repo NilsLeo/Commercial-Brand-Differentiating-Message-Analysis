@@ -115,18 +115,18 @@ download_files() {
     done
 
     # Clone repositories
-    git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
-    git clone "git@github.com:oarriaga/face_classification.git" "$BILDANALYSE_MODELS_EMOTION_DIR"
-    git clone "git@github.com:x4nth055/gender-recognition-by-voice.git" "$TONANALYSE_AUDIO_GENDER_NOTEBOOKS_DIR"
-    git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
+    # git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
+    # git clone "git@github.com:oarriaga/face_classification.git" "$BILDANALYSE_MODELS_EMOTION_DIR"
+    # git clone "git@github.com:x4nth055/gender-recognition-by-voice.git" "$TONANALYSE_AUDIO_GENDER_NOTEBOOKS_DIR"
+    # git clone "git@github.com:patriceguyot/Acoustic_Indices.git" "$TONANALYSE_ACOUSTIC_INDICES_QUELLCODE_DIR"
 
-    # Download, unzip, and remove file
-    local download_url="https://box.fu-berlin.de/s/zwxKp8PXkCwAwGe/download"
-    local download_path="$ROOT_DIR/download"
+    # # Download, unzip, and remove file
+    # local download_url="https://box.fu-berlin.de/s/zwxKp8PXkCwAwGe/download"
+    # local download_path="$ROOT_DIR/download"
     
-    wget -O "$download_path" "$download_url"
-    unzip "$download_path" -d "$ROOT_DIR"
-    rm "$download_path"
+    # wget -O "$download_path" "$download_url"
+    # unzip "$download_path" -d "$ROOT_DIR"
+    # rm "$download_path"
 }
 
 reduce_ads_selection() {
@@ -182,15 +182,16 @@ convert_mp4_to_wav() {
 
 main_workflow() {
     # Uncomment generate_env_vars to ensure .env file exists
-    generate_env_vars
+    # generate_env_vars
     # delete_gitignore_files
-    # download_files
+    download_files
+
     # reduce_ads_selection
     # convert_mp4_to_wav
     # setup_and_execute "./Final_Files/01. Bildanalyse/03. main_Script/" "03. main_Bildanalyse"
     # setup_and_execute "./Final_Files/02. Tonanalyse/main_sound_recognition_FINAL/" "main_sound_recognition_FINAL"
     # setup_and_execute "./Final_Files/03. Output Bild + Ton/02. Final Excel File/ End_Datei_Code/" "End_Datei_Code"
-    setup_and_execute "./Neues_Projekt/" "BDM_Detection"
+    # setup_and_execute "./Neues_Projekt/" "BDM_Detection"
 }
 
 main_workflow
