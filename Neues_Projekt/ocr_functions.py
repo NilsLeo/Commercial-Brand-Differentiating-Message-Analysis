@@ -1,5 +1,3 @@
-from dotenv import load_dotenv
-import os
 import pandas as pd
 import cv2
 from easyocr import Reader
@@ -7,6 +5,9 @@ import matplotlib.pyplot as plt
 import re
 import enchant
 import spacy
+from frame_extraction import extraction
+from rapidfuzz import fuzz
+import enchant
 
 # Wörterbuch für Englisch
 english_dict = enchant.Dict("en_US")
@@ -14,8 +15,28 @@ english_dict = enchant.Dict("en_US")
 # Lade spaCy-Modell
 nlp = spacy.load("en_core_web_md")
 
-
 # 1. OCR durchführen
+
+# Funktion: Wasserzeichen-Bereich abdecken
+def cover_watermark(frame, x, y, w, h, method="black"):
+    """
+    Überdeckt den Wasserzeichen-Bereich in einem Bild.
+    Args:
+    - frame: Das Bild/Frame (numpy-Array)
+    - x, y: Obere linke Ecke des Wasserzeichen-Bereichs
+    - w, h: Breite und Höhe des Wasserzeichen-Bereichs
+    - method: Methode zum Abdecken ("black" oder "blur")
+    """
+    roi = frame[y:y+h, x:x+w]
+    if method == "black":
+        # Füllt den Bereich mit Schwarz
+        frame[y:y+h, x:x+w] = (0, 0, 0)
+    elif method == "blur":
+        # Wendet einen Weichzeichner auf den Bereich an
+        frame[y:y+h, x:x+w] = cv2.GaussianBlur(roi, (15, 15), 0)
+    return frame
+
+
 def process_frames_with_watermark_removal(frames, x, y, w, h, method="black"):
     """
     Entfernt Wasserzeichen und führt OCR auf allen Frames durch, gruppiert die Ergebnisse nach Frames.
@@ -31,26 +52,25 @@ def process_frames_with_watermark_removal(frames, x, y, w, h, method="black"):
     results_list = []
 
     # Iteriere durch alle Frames
-    for frame_info in frames:
-        ad_name = frame_info["ad"]
-        frame_path = frame_info["frame_path"]
-
-        # Lade das Bild
-        image = cv2.imread(frame_path)
-
+    for frame_idx, frame in enumerate(frames):
         # Abdeckung des Wasserzeichens
-        image = cover_watermark(image, x, y, w, h, method)
+        frame = cover_watermark(frame, x, y, w, h, method)
 
         # Perform text recognition with EasyOCR (nur auf das abgedeckte Bild)
-        ocr_results = reader.readtext(image)
+        reader = Reader(['en'], gpu=True)
+        if reader is not None:
+            ocr_results = reader.readtext(frame)
+        else:
+            raise ValueError("Ein EasyOCR-Reader muss übergeben werden!")
 
         # Ergebnisse speichern
         for (bbox, text, prob) in ocr_results:
             # Überprüfe, ob der Text gültig ist (nicht leer oder nur Sonderzeichen)
             if text and text.strip() and len(text.strip()) > 1:  # Sicherstellen, dass der Text sinnvoll ist
                 results_list.append({
-                    "Frame": os.path.basename(frame_path),  # Nur der Dateiname
-                    "Recognized_Text": text.strip(),       # Direkter Text ohne zusätzliche Filterung
+                    "Frame_index": frame_idx,  # Index des Frames in der Liste
+                    "Recognized_Text": text.strip(),  # Direkter Text ohne zusätzliche Filterung
+                    "Ad_Name": "AD",  # Werbung Name für alle Frames
                 })
 
     # Ergebnisse in DataFrame umwandeln
@@ -58,7 +78,7 @@ def process_frames_with_watermark_removal(frames, x, y, w, h, method="black"):
 
     # Gruppiere die Ergebnisse nach Frames
     merged_results = (
-        results_df.groupby("Frame")
+        results_df.groupby("Frame_index")
         .agg({
             "Recognized_Text": lambda x: ", ".join(x),  # Kombiniere alle erkannten Texte pro Frame
         })
@@ -68,21 +88,16 @@ def process_frames_with_watermark_removal(frames, x, y, w, h, method="black"):
     return merged_results
 
 
+
 # 2. Duplikate entfernen
 
-from collections import Counter
-from rapidfuzz import fuzz
-import enchant
-from collections import Counter
-
 # Enchant-Wörterbuch für Englisch
-checker = enchant.Dict("en_US")
 def count_correct_spelled_words(text):
     """Zählt, wie viele Wörter im Text laut Enchant korrekt geschrieben sind."""
     words = text.split()
     correct_count = 0
     for w in words:
-        if checker.check(w):
+        if english_dict.check(w):
             correct_count += 1
     return correct_count
 
@@ -155,20 +170,18 @@ def sort_frames(dataframe, frame_column="Frame"):
     return dataframe
 
 # Funktion: Erstelle die bereinigte Tabelle
-def create_cleaned_dataframe(merged_results, ad_column="Frame", text_column="Recognized_Text", threshold=60):
-    # Extrahiere den "Ad"-Namen aus den Frame-Namen
-    merged_results["ad"] = merged_results[ad_column].apply(lambda x: x.split("_")[0])  
-    # Gruppiere nach "ad" und bereinige Texte
-    cleaned_data = []
-    for ad, group in merged_results.groupby("ad"):
-        unique_texts = remove_similar_texts(group[text_column].tolist(), threshold=threshold)
-        unique_texts = [text for text in unique_texts if text.strip()]
-        combined_text = "; ".join(unique_texts)  # Kombiniere die bereinigten Texte
-        cleaned_data.append({"ad": ad, "recognized_text": combined_text})
-    
+def create_cleaned_dataframe(merged_results, text_column="Recognized_Text", threshold=60):
+    # Bereinige und gruppiere die Texte
+    unique_texts = remove_similar_texts(merged_results[text_column].tolist(), threshold=threshold)
+    unique_texts = [text for text in unique_texts if text.strip()]  # Entferne leere oder nur Leerzeichen enthaltende Texte
+
+    # Kombiniere die bereinigten Texte in eine einzige Zeichenkette
+    combined_text = "; ".join(unique_texts)
+
     # Erstelle eine neue DataFrame
-    cleaned_df = pd.DataFrame(cleaned_data)
-    return cleaned_df 
+    cleaned_df = pd.DataFrame([{"Recognized_Text": combined_text}])
+
+    return cleaned_df
 
 
 def clean_recognized_text_with_spacy(text):
@@ -186,16 +199,16 @@ def clean_recognized_text_with_spacy(text):
     cleaned_text0 = re.sub(r"-", " ", text)
     cleaned_text1 = re.sub(r"[^\w\s']|(?<=\s)'|'(?=\s)", "", cleaned_text0)
     cleaned_text = re.sub(r"(?<=\w)'(?!\w)", "", cleaned_text1)
-    print("Bereinigter Text ohne Sonderzeichen:", cleaned_text)
+    #print("Bereinigter Text ohne Sonderzeichen:", cleaned_text)
 
     # 2. Text in Wörter aufteilen und in Kleinbuchstaben umwandeln
     words_in_text = cleaned_text.split()
-    print("Aufgeteilte Wörter (Kleinschreibung):", words_in_text)
+    #print("Aufgeteilte Wörter (Kleinschreibung):", words_in_text)
 
     # 3. spaCy Named Entity Recognition (NER)
     doc = nlp(cleaned_text)
     recognized_entities = {ent.text.lower() for ent in doc.ents}
-    print("Von spaCy erkannte Entitäten:", recognized_entities)
+    #print("Von spaCy erkannte Entitäten:", recognized_entities)
 
     # 4. Filtere Wörter basierend auf Wörterbuch und spaCy-Entitäten
     meaningful_words = [
@@ -205,10 +218,11 @@ def clean_recognized_text_with_spacy(text):
 
     # 5. Bereinige den Text, indem nur relevante Wörter beibehalten werden
     final_cleaned_text = " ".join(meaningful_words)
+
     return final_cleaned_text
 
 
-def process_all_ads(input_folder, x=62, y=545, w=235, h=60, method="black", threshold=70):
+def process_all_ads(input_folder):
     """
     Hauptpipeline, die alle Schritte für die Verarbeitung aller Werbungen durchführt.
     Args:
@@ -216,22 +230,33 @@ def process_all_ads(input_folder, x=62, y=545, w=235, h=60, method="black", thre
     Returns:
         pd.DataFrame: Ein bereinigtes DataFrame mit allen Werbungen und kombinierten Texten.
     """
-    # Lade alle Frames
-    frames = load_all_frames(input_folder)
+    # Frame extraction
+    frames = extraction(input_folder, kps=3)
     
     # Führe OCR auf allen Frames durch und entfernt Wasserzeichen
+    x, y, w, h=62, 545, 235, 60
+    method="black"
     ocr_df = process_frames_with_watermark_removal(frames, x, y, w, h, method)
-    
+
     # df frames sortieren
-    sorted_ocr_df = sort_frames(ocr_df,"Frame")
+    #sorted_ocr_df = sort_frames(ocr_df,"Frame")
+    #print('succesful sorted')
 
     #2 Bereinige und kombiniere die Texte
-    final_ocr_df = create_cleaned_dataframe(sorted_ocr_df,text_column="Recognized_Text", threshold=50)
+    final_ocr_df = create_cleaned_dataframe(ocr_df,text_column="Recognized_Text", threshold=50)
+    #print('succesful grouped')
 
     # Daten mit Wörterbuch abgleichen und 
-    final_ocr_df["cleaned_text"] = final_ocr_df["recognized_text"].apply(clean_recognized_text_with_spacy)
+    final_ocr_df["cleaned_text"] = final_ocr_df["Recognized_Text"].apply(clean_recognized_text_with_spacy)
+    #print('succesful cleaned')
     
     # Alle Texte aus 'cleaned_text' werden als String ausgegeben
     cleaned_text = " ".join(final_ocr_df["cleaned_text"].dropna().tolist())
-        
+    #print("cleaned_text:", cleaned_text)
+
     return cleaned_text
+
+#test-------------------
+#video_path = "uploaded_file.mp4"
+#text = process_all_ads(video_path)
+#print()
