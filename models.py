@@ -84,16 +84,10 @@ def get_param_distributions():
             'strategy': ['stratified']
         }
     }
-# TODO: change cv to 5
-def tune_models(X, y, models, param_distributions, cv=2, n_iter=20):
+
+def tune_models(X, y, models, param_distributions, cv=5, n_iter=20):
     """Perform RandomizedSearchCV on specified models"""
     tuned_models = {}
-    
-    # Find the minimum number of instances among all classes
-    min_class_size = min(np.bincount(y))
-    
-    # Adjust cv if it's greater than min_class_size
-    cv = min(cv, min_class_size)
     
     for name, model in models.items():
         if name in param_distributions:
@@ -115,6 +109,7 @@ def tune_models(X, y, models, param_distributions, cv=2, n_iter=20):
             tuned_models[name] = model
             
     return tuned_models
+
 def prepare_model_data(ad_df, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS):
     columns = ['superlative_count', 'comparative_count', 'uniqueness_count', 'total_bdm_terms_count', 'total_bdm_terms_pct', 'num_adj_noun_pairs']
 
@@ -129,7 +124,6 @@ def prepare_model_data(ad_df, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWAREN
     target = ad_df['BDM']
     
     return features, target
-
 
 def save_models(trained_models, output_dir='trained_models'):
     """
@@ -196,8 +190,7 @@ def train_models(X, y, models):
     return trained_models
 
 # Modified evaluate_models to accept trained models
-# TODO: change cv to 5
-def evaluate_models(X, y, trained_models, cv=2):
+def evaluate_models(X, y, trained_models, cv=5):
     """
     Evaluate trained models and return results
     
