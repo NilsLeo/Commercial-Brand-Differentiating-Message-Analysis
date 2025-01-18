@@ -4,9 +4,36 @@ from transcript import transcribe_video
 import os
 from ocr import ocr
 import text_analysis as ta
+import ast
+import numpy as np
+import models as m
 # File uploader
 st.markdown("# Commercial Brand Differentiating Analysis Prediction Model")
 st.markdown("## Input Data")
+product_brands_df = pd.read_csv("product_categories.csv")
+product_category = st.selectbox(
+    "Select Product Category",
+product_brands_df["product_cat_name"].unique()
+)
+
+
+product_cat_keywords = product_brands_df[product_brands_df["product_cat_name"]==product_category]['product_cat_keywords'].values[0][1:-1].replace("'", "").split(", ")
+# Add input fields
+product_brand_df= pd.read_csv("product_brands.csv")
+
+
+product_brand = st.selectbox(
+    "Select Brand",
+     product_brand_df["brand"].unique()
+    )
+
+product_brand_keywords = product_brand_df[product_brand_df["brand"]==product_brand]['product_brand_keywords'].values[0][1:-1].replace("'", "").split(", ")
+
+
+ad_df = pd.DataFrame({
+    "brand": [product_brand],
+    "product_category": [product_category]
+})
 
 uploaded_file = st.file_uploader("Upload a Video of a Commercial to get started", type=["mp4"])
 if uploaded_file is not None:
@@ -18,22 +45,11 @@ if uploaded_file is not None:
     with open("uploaded_file.mp4", "wb") as f:
         f.write(bytes_data)
     st.write("File saved as uploaded_file.mp4")
+    
+    # Display the uploaded video
+    st.video(uploaded_file)
 
 
-# Add input fields
-product_brand = st.selectbox(
-    "Select Brand",
-     ["Snickers", "Avocados From Mexico","Other"]
-    )
-
-product_category = st.selectbox(
-    "Select Product Category",
-    ["Electronics", "Clothing", "Food", "Beauty", "Other"]
-)
-ad_df = pd.DataFrame({
-    "brand": [product_brand],
-    "product_category": [product_category]
-})
 st.markdown("## Output Data")
 
 transcript = transcribe_video(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
@@ -59,11 +75,12 @@ word_count = len(ta.get_tokens(transcript))
 superlatives = ta.get_superlatives(transcript)
 comparatives = ta.get_comparatives(transcript)
 unique_words = ta.get_unique_words(transcript)
-
+adj_noun_pairs = ta.extract_adj_noun_pairs(transcript)
 # Calculate counts and percentages
 superlative_count = len(superlatives)
 comparative_count = len(comparatives)
 uniqueness_count = len(unique_words)
+num_adj_noun_pairs = len(adj_noun_pairs)
 
 superlative_pct = (superlative_count / word_count * 100) if word_count > 0 else 0
 comparative_pct = (comparative_count / word_count * 100) if word_count > 0 else 0
@@ -96,6 +113,10 @@ with col2:
     st.markdown("**Unique Words**")
     st.markdown(f"Count: {uniqueness_count} ({uniqueness_pct:.1f}%)")
     st.markdown(f"> {', '.join(unique_words) if unique_words else 'None found'}")
+    
+    st.markdown("**Adjective-Noun Pairs**")
+    st.markdown(f"Count: {num_adj_noun_pairs}")
+    st.markdown(f"> {', '.join(adj_noun_pairs) if adj_noun_pairs else 'None found'}")
 
 # Update the DataFrame with the analysis results
 ad_df["superlatives"] = ', '.join(superlatives) if superlatives else ''
@@ -103,46 +124,71 @@ ad_df["comparatives"] = ', '.join(comparatives) if comparatives else ''
 ad_df["unique_words"] = ', '.join(unique_words) if unique_words else ''
 ad_df["total_bdm_terms_pct"] = total_bdm_pct
 
+st.markdown("### Product Category Specificity")
+st.info('Here is the comparison of the commercial transcript with the product category keywords!', icon="🔍")
+
+st.markdown(f"**Category**: {product_category}")
+st.markdown("**Keywords**:")
+st.code(', '.join(keyword.strip() for keyword in product_cat_keywords))
+ad_df["product_cat_keywords"] = ', '.join(product_cat_keywords)
+
+# Calculate category similarities
+product_cat_keyword_similarities = {
+    keyword: round(float(ta.get_semantic_similarity(transcript, keyword)), 3)
+    for keyword in product_cat_keywords
+}
+
+# Get top 3 category matches
+cat_sorted_keywords = sorted(product_cat_keyword_similarities.items(), key=lambda x: x[1], reverse=True)
+cat_top_3 = cat_sorted_keywords[:3]
+cat_top_3_avg = round(float(np.mean([sim for _, sim in cat_top_3])), 3)
+
+# Display category metrics
+st.metric("Category Match Score", f"{cat_top_3_avg:.3f}")
+st.markdown("**Top Matching Keywords (Average of the following top 3):**")
+for keyword, similarity in cat_top_3:
+    st.progress(similarity)
+    st.caption(f"{keyword}: {similarity:.3f}")
+
+st.markdown("### Brand Specificity")
+st.info('Here is the comparison of the commercial transcript with the brand keywords!', icon="🔍")
+
+st.markdown(f"**Brand**: {product_brand}")
+st.markdown("**Keywords**:")
+st.code(', '.join(keyword.strip() for keyword in product_brand_keywords))
+ad_df["product_brand_keywords"] = ', '.join(product_brand_keywords)
+
+# Calculate brand similarities
+product_brand_keyword_similarities = {
+    keyword: round(float(ta.get_semantic_similarity(transcript, keyword)), 3)
+    for keyword in product_brand_keywords
+}
+
+# Get top 3 brand matches
+brand_sorted_keywords = sorted(product_brand_keyword_similarities.items(), key=lambda x: x[1], reverse=True)
+brand_top_3 = brand_sorted_keywords[:3]
+brand_top_3_avg = round(float(np.mean([sim for _, sim in brand_top_3])), 3)
+
+# Display brand metrics
+st.metric("Brand Match Score (Average of the following top 3)", f"{brand_top_3_avg:.3f}")
+st.markdown("**Top Matching Keywords:**")
+for keyword, similarity in brand_top_3:
+    st.progress(similarity)
+    st.caption(f"{keyword}: {similarity:.3f}")
+
+ad_df['product_cat_keyword_similarity'] = cat_top_3_avg
+ad_df['product_cat_top_keywords'] = ', '.join([keyword for keyword, _ in cat_top_3])
+
+ad_df['product_brand_keyword_similarity'] =brand_top_3_avg
+ad_df['product_brand_top_keywords'] = ', '.join([keyword for keyword, _ in brand_top_3])
+
+
 st.markdown("### Final Overview of all Data")
 st.write(ad_df)
 
+st.markdown("### Model Result")
+trained_models = m.load_models()
+data, target = m.prepare_model_data(ad_df)
+results_df, predictions = m.evaluate_models(data, target, trained_models)
 
-
-
-# csv columns: brand,commercial_number,BDM,transcript,audio_only_transcript,total_bdm_terms_pct,comparatives,superlatives,unique_words,bdm_words,product_cat_name,product_cat_keywords,product_cat_brands,product_cat_keyword_similarity,similar_phrases,shared_keywords,shared_keywords_count
-
-# st.subheader("Brand")
-# st.write(first_row["brand"])
-# st.subheader("Product Category")
-# st.write(first_row["product_cat_name"])
-# st.subheader("BDM")
-# st.write(first_row["BDM"])
-# st.subheader("Transcript")
-# st.write(first_row["transcript"])
-# st.subheader("Audio Only Transcript")
-# transcribe_video(f"{os.path.abspath(__file__)}")
-# st.write(first_row["audio_only_transcript"])
-
-# st.subheader("Total BDM Terms Percentage")
-# st.write(first_row["total_bdm_terms_pct"])
-# st.subheader("Comparatives")
-# st.write(first_row["comparatives"])
-# st.subheader("Superlatives")
-# st.write(first_row["superlatives"])
-# st.subheader("Unique Words")
-# st.write(first_row["unique_words"])
-# st.subheader("BDM Words")
-# st.write(first_row["bdm_words"])
-# st.subheader("Product Category Keywords")
-# st.write(first_row["product_cat_keywords"])
-# st.subheader("Product Category Brands")
-# st.write(first_row["product_cat_brands"])
-# st.subheader("Keyword Similarity")
-# st.write(first_row["product_cat_keyword_similarity"])
-# st.subheader("Similar Phrases")
-# st.write(first_row["similar_phrases"])
-# st.subheader("Shared Keywords")
-# st.write(first_row["shared_keywords"])
-# st.subheader("Shared Keywords Count")
-# st.write(first_row["shared_keywords_count"])
-
+st.write(results_df)
