@@ -3,20 +3,16 @@ import pandas as pd  # Add this import at the top
 from transcript import transcribe_video
 import os
 # TODO: Import the `ocr` function once it works
-# from ocr import ocr
+from ocr import ocr
 import text_analysis as ta
 import ast
 import numpy as np
 import models as m
-def ocr(video_path: str) -> str:
-    return "This is a placeholder for the OCR text"
-
-ad_df = pd.DataFrame()
-
-
 st.markdown("# Commercial Brand Differentiating Analysis Prediction Model")
 st.markdown("## Input Data")
 st.markdown("### Awareness Filters")
+
+ad_df = pd.DataFrame()
 INDUSTRY_SPECIFIC_AWARENESS = st.checkbox("Enable Industry Knowledge", key="industry_enabled")
 st.info('Our model knows of a select few Industries with Keywords commonly associated with a BDM. Enable this and check if your ad fits into one of these categories', icon="🔍")
 

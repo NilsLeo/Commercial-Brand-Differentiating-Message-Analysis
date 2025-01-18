@@ -278,5 +278,3 @@ def ocr(video_path: str):
   print("cleaned_text:", text)
   return text
 
-ocr(video_path)
-

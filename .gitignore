@@ -1,8 +1,7 @@
 
-.venv
-__pycache__
-ADs
-01_input_frames_all
-uploaded_file.mp4
-csvs
-trained_models
+app/.venv
+app/__pycache__
+app/ADs
+app/uploaded_file.mp4
+app/csvs
+app/trained_models
