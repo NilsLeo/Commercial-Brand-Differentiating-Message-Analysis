@@ -7,33 +7,44 @@ import text_analysis as ta
 import ast
 import numpy as np
 import models as m
-# File uploader
+
+ad_df = pd.DataFrame()
+
+st.markdown("### Awareness Filters")
 st.markdown("# Commercial Brand Differentiating Analysis Prediction Model")
 st.markdown("## Input Data")
-product_brands_df = pd.read_csv("product_categories.csv")
+
+INDUSTRY_SPECIFIC_AWARENESS = st.checkbox("Enable Industry Knowledge", key="industry_enabled")
+st.info('Our model knows of a select few Industries with Keywords commonly associated with a BDM. Enable this and check if your ad fits into one of these categories', icon="🔍")
+
+product_cat_df = pd.read_csv("product_categories.csv")
 product_category = st.selectbox(
-    "Select Product Category",
-product_brands_df["product_cat_name"].unique()
+"Select Product Category",
+product_cat_df["product_cat_name"].unique(),
+disabled=not st.session_state.enabled,
 )
 
+if INDUSTRY_SPECIFIC_AWARENESS:
+    product_cat_keywords = product_cat_df[product_cat_df["product_cat_name"]==product_category]['product_cat_keywords'].values[0][1:-1].replace("'", "").split(", ")
+    ad_df = pd.DataFrame({
+        "product_category": [product_category]
+    })
 
-product_cat_keywords = product_brands_df[product_brands_df["product_cat_name"]==product_category]['product_cat_keywords'].values[0][1:-1].replace("'", "").split(", ")
-# Add input fields
 product_brand_df= pd.read_csv("product_brands.csv")
-
-
 product_brand = st.selectbox(
     "Select Brand",
-     product_brand_df["brand"].unique()
-    )
+    product_brand_df["brand"].unique()
+)
 
-product_brand_keywords = product_brand_df[product_brand_df["brand"]==product_brand]['product_brand_keywords'].values[0][1:-1].replace("'", "").split(", ")
+BRAND_SPECIFIC_AWARENESS = st.checkbox("Enable Brand Knowledge", key="enabled")
+st.info('Our model knows of a select few Brands with Keywords commonly associated with a BDM. Enable this and check if your ad fits into one of these categories', icon="🔍")
 
+if BRAND_SPECIFIC_AWARENESS:
+    product_brand_keywords = product_brand_df[product_brand_df["brand"]==product_brand]['product_brand_keywords'].values[0][1:-1].replace("'", "").split(", ")
+    ad_df = pd.DataFrame({
+        "product_brand": [product_brand]
+    })
 
-ad_df = pd.DataFrame({
-    "brand": [product_brand],
-    "product_category": [product_category]
-})
 
 uploaded_file = st.file_uploader("Upload a Video of a Commercial to get started", type=["mp4"])
 if uploaded_file is not None:
@@ -124,63 +135,67 @@ ad_df["comparatives"] = ', '.join(comparatives) if comparatives else ''
 ad_df["unique_words"] = ', '.join(unique_words) if unique_words else ''
 ad_df["total_bdm_terms_pct"] = total_bdm_pct
 
-st.markdown("### Product Category Specificity")
-st.info('Here is the comparison of the commercial transcript with the product category keywords!', icon="🔍")
+if INDUSTRY_SPECIFIC_AWARENESS:
 
-st.markdown(f"**Category**: {product_category}")
-st.markdown("**Keywords**:")
-st.code(', '.join(keyword.strip() for keyword in product_cat_keywords))
-ad_df["product_cat_keywords"] = ', '.join(product_cat_keywords)
+    st.markdown("### Product Category Specificity")
+    st.info('Here is the comparison of the commercial transcript with the product category keywords!', icon="🔍")
 
-# Calculate category similarities
-product_cat_keyword_similarities = {
-    keyword: round(float(ta.get_semantic_similarity(transcript, keyword)), 3)
-    for keyword in product_cat_keywords
-}
+    st.markdown(f"**Category**: {product_category}")
+    st.markdown("**Keywords**:")
+    st.code(', '.join(keyword.strip() for keyword in product_cat_keywords))
+    ad_df["product_cat_keywords"] = ', '.join(product_cat_keywords)
 
-# Get top 3 category matches
-cat_sorted_keywords = sorted(product_cat_keyword_similarities.items(), key=lambda x: x[1], reverse=True)
-cat_top_3 = cat_sorted_keywords[:3]
-cat_top_3_avg = round(float(np.mean([sim for _, sim in cat_top_3])), 3)
+    # Calculate category similarities
+    product_cat_keyword_similarities = {
+        keyword: round(float(ta.get_semantic_similarity(transcript, keyword)), 3)
+        for keyword in product_cat_keywords
+    }
 
-# Display category metrics
-st.metric("Category Match Score", f"{cat_top_3_avg:.3f}")
-st.markdown("**Top Matching Keywords (Average of the following top 3):**")
-for keyword, similarity in cat_top_3:
-    st.progress(similarity)
-    st.caption(f"{keyword}: {similarity:.3f}")
+    # Get top 3 category matches
+    cat_sorted_keywords = sorted(product_cat_keyword_similarities.items(), key=lambda x: x[1], reverse=True)
+    cat_top_3 = cat_sorted_keywords[:3]
+    cat_top_3_avg = round(float(np.mean([sim for _, sim in cat_top_3])), 3)
 
-st.markdown("### Brand Specificity")
-st.info('Here is the comparison of the commercial transcript with the brand keywords!', icon="🔍")
+    # Display category metrics
+    st.metric("Category Match Score", f"{cat_top_3_avg:.3f}")
+    st.markdown("**Top Matching Keywords (Average of the following top 3):**")
+    for keyword, similarity in cat_top_3:
+        st.progress(similarity)
+        st.caption(f"{keyword}: {similarity:.3f}")
 
-st.markdown(f"**Brand**: {product_brand}")
-st.markdown("**Keywords**:")
-st.code(', '.join(keyword.strip() for keyword in product_brand_keywords))
-ad_df["product_brand_keywords"] = ', '.join(product_brand_keywords)
+if BRAND_SPECIFIC_AWARENESS:
 
-# Calculate brand similarities
-product_brand_keyword_similarities = {
-    keyword: round(float(ta.get_semantic_similarity(transcript, keyword)), 3)
-    for keyword in product_brand_keywords
-}
+    st.markdown("### Brand Specificity")
+    st.info('Here is the comparison of the commercial transcript with the brand keywords!', icon="🔍")
 
-# Get top 3 brand matches
-brand_sorted_keywords = sorted(product_brand_keyword_similarities.items(), key=lambda x: x[1], reverse=True)
-brand_top_3 = brand_sorted_keywords[:3]
-brand_top_3_avg = round(float(np.mean([sim for _, sim in brand_top_3])), 3)
+    st.markdown(f"**Brand**: {product_brand}")
+    st.markdown("**Keywords**:")
+    st.code(', '.join(keyword.strip() for keyword in product_brand_keywords))
+    ad_df["product_brand_keywords"] = ', '.join(product_brand_keywords)
 
-# Display brand metrics
-st.metric("Brand Match Score (Average of the following top 3)", f"{brand_top_3_avg:.3f}")
-st.markdown("**Top Matching Keywords:**")
-for keyword, similarity in brand_top_3:
-    st.progress(similarity)
-    st.caption(f"{keyword}: {similarity:.3f}")
+    # Calculate brand similarities
+    product_brand_keyword_similarities = {
+        keyword: round(float(ta.get_semantic_similarity(transcript, keyword)), 3)
+        for keyword in product_brand_keywords
+    }
 
-ad_df['product_cat_keyword_similarity'] = cat_top_3_avg
-ad_df['product_cat_top_keywords'] = ', '.join([keyword for keyword, _ in cat_top_3])
+    # Get top 3 brand matches
+    brand_sorted_keywords = sorted(product_brand_keyword_similarities.items(), key=lambda x: x[1], reverse=True)
+    brand_top_3 = brand_sorted_keywords[:3]
+    brand_top_3_avg = round(float(np.mean([sim for _, sim in brand_top_3])), 3)
 
-ad_df['product_brand_keyword_similarity'] =brand_top_3_avg
-ad_df['product_brand_top_keywords'] = ', '.join([keyword for keyword, _ in brand_top_3])
+    # Display brand metrics
+    st.metric("Brand Match Score (Average of the following top 3)", f"{brand_top_3_avg:.3f}")
+    st.markdown("**Top Matching Keywords:**")
+    for keyword, similarity in brand_top_3:
+        st.progress(similarity)
+        st.caption(f"{keyword}: {similarity:.3f}")
+
+    ad_df['product_cat_keyword_similarity'] = cat_top_3_avg
+    ad_df['product_cat_top_keywords'] = ', '.join([keyword for keyword, _ in cat_top_3])
+
+    ad_df['product_brand_keyword_similarity'] =brand_top_3_avg
+    ad_df['product_brand_top_keywords'] = ', '.join([keyword for keyword, _ in brand_top_3])
 
 
 st.markdown("### Final Overview of all Data")
@@ -188,7 +203,7 @@ st.write(ad_df)
 
 st.markdown("### Model Result")
 trained_models = m.load_models()
-data, target = m.prepare_model_data(ad_df)
+data, target = m.prepare_model_data(ad_df, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS)
 results_df, predictions = m.evaluate_models(data, target, trained_models)
 
 st.write(results_df)
