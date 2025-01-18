@@ -10,7 +10,7 @@ This Project aims to provide a Framework which can be used to analyse a commerci
 
 # Prerequisites (for docker container later on)
 
-- python
+- Python 3.9.12
 - virtualenv `pip install virtualenv python-dotenv`
 
 ```bash

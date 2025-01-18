@@ -1,62 +1,6 @@
-Resources/Ads
-01_input_frames_all
-Final_Files/01. Bildanalyse/02. models/02. DEX
-Final_Files/01. Bildanalyse/01. input_files/
-Final_Files/01. Bildanalyse/04. output_frames/
-Final_Files/01. Bildanalyse/02. models/03. emotion_model
-Final_Files/02. Tonanalyse/Tonanalyse 1/Geschlechtserkennung/splitted_audios
-Final_Files/02. Tonanalyse/Acoustic_Indices/00 Quellcode
-Final_Files/02. Tonanalyse/Tonanalyse 1/Stimmungsanalyse/Audio_&_TXT_Dateien
-Final_Files/02. Tonanalyse/Geschlechtserkennung/splitted_audios
-Final_Files/02. Tonanalyse/Stimmungsanalyse/Audio_&_TXT_Dateien
-Final_Files/02. Tonanalyse/Stimmungsanalyse/JSON_Dateien
-Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_10
-Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_15
-Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_20
-Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/test_Intervall_25
-Final_Files/02. Tonanalyse/Stimmungsanalyse/Modellevaluation_Stimmungsanalyse/all_ads_Intervall_10.xlsx
-Final_Files/03. Output Bild + Ton/01. output_lists
-*.DS_STORE
-*.DS_Store
-.env
-Superbowl Ad Analysis Report.pdf
 
-
-*.pyc
-
-venv
-
-Projektdateien
+.venv
+__pycache__
 ADs
-ADs_wav
-ADs_Full
-Final_Files/02. Tonanalyse/.venv
-Final_Files/02. Tonanalyse/None
-Bessere_Version_Projektdateien.zip
-Final_Files/01. Bildanalyse/03. main_Script/03. main_Bildanalyse-venv
-Final_Files/01. Bildanalyse/05. Heatmaps_Bildkomposition/Heatmap_Bildkomposition-venv
-Final_Files/01. Bildanalyse/03. main_Script/detectron2
-Final_Files/02. Tonanalyse/main_sound_recognition_FINAL-venv
-Final_Files/03. Output Bild + Ton/02. Final Excel File/End_Datei_Code-venv
-Neues_Projekt/BDM_Detection-venv
-Final_Files/03. Output Bild + Ton/brand_keywords.csv
-Final_Files/03. Output Bild + Ton/brand_keywords.xlsx
-Final_Files/03. Output Bild + Ton/brand_product_transcripts.csv
-Final_Files/03. Output Bild + Ton/End_Datei_columns.xlsx
-Final_Files/03. Output Bild + Ton/End_Datei.xlsx
-Final_Files/03. Output Bild + Ton/End_Datei_columns.xlsx
-Final_Files/03. Output Bild + Ton/End_Datei.xlsx
-Final_Files/03. Output Bild + Ton/02. Final Excel File/End_Datei.xlsx
-Final_Files/01. Bildanalyse/03. main_Script/log.log
-Final_Files/02. Tonanalyse/log.log
-Final_Files/02. Tonanalyse/file.txt
-Neues_Projekt/.venv
-Neues_Projekt/aclImdb
-Neues_Projekt/train_dataset.csv
-Neues_Projekt/test.csv
-Neues_Projekt/test_dataset.csv
-Neues_Projekt/linlu_table.xlsx
-Neues_Projekt/End_Datei.xlsx
-Neues_Projekt/SB_AD_LIST__2013-2022.xlsx
-Neues_Projekt/df.csv
-Neues_Projekt/uploaded_file.mp4
+01_input_frames_all
+uploaded_file.mp4
