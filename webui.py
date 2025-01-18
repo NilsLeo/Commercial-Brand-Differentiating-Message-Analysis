@@ -2,18 +2,21 @@ import streamlit as st
 import pandas as pd  # Add this import at the top
 from transcript import transcribe_video
 import os
-from ocr import ocr
+# TODO: Import the `ocr` function once it works
+# from ocr import ocr
 import text_analysis as ta
 import ast
 import numpy as np
 import models as m
+def ocr(video_path: str) -> str:
+    return "This is a placeholder for the OCR text"
 
 ad_df = pd.DataFrame()
 
-st.markdown("### Awareness Filters")
+
 st.markdown("# Commercial Brand Differentiating Analysis Prediction Model")
 st.markdown("## Input Data")
-
+st.markdown("### Awareness Filters")
 INDUSTRY_SPECIFIC_AWARENESS = st.checkbox("Enable Industry Knowledge", key="industry_enabled")
 st.info('Our model knows of a select few Industries with Keywords commonly associated with a BDM. Enable this and check if your ad fits into one of these categories', icon="🔍")
 
@@ -21,7 +24,7 @@ product_cat_df = pd.read_csv("product_categories.csv")
 product_category = st.selectbox(
 "Select Product Category",
 product_cat_df["product_cat_name"].unique(),
-disabled=not st.session_state.enabled,
+disabled=not st.session_state.industry_enabled,
 )
 
 if INDUSTRY_SPECIFIC_AWARENESS:
@@ -30,14 +33,15 @@ if INDUSTRY_SPECIFIC_AWARENESS:
         "product_category": [product_category]
     })
 
+
+BRAND_SPECIFIC_AWARENESS = st.checkbox("Enable Brand Knowledge", key="brand_enabled")
+st.info('Our model knows of a select few Brands with Keywords commonly associated with a BDM. Enable this and check if your ad fits into one of these categories', icon="🔍")
 product_brand_df= pd.read_csv("product_brands.csv")
 product_brand = st.selectbox(
     "Select Brand",
-    product_brand_df["brand"].unique()
+    product_brand_df["brand"].unique(),
+    disabled=not st.session_state.brand_enabled,
 )
-
-BRAND_SPECIFIC_AWARENESS = st.checkbox("Enable Brand Knowledge", key="enabled")
-st.info('Our model knows of a select few Brands with Keywords commonly associated with a BDM. Enable this and check if your ad fits into one of these categories', icon="🔍")
 
 if BRAND_SPECIFIC_AWARENESS:
     product_brand_keywords = product_brand_df[product_brand_df["brand"]==product_brand]['product_brand_keywords'].values[0][1:-1].replace("'", "").split(", ")
@@ -45,7 +49,7 @@ if BRAND_SPECIFIC_AWARENESS:
         "product_brand": [product_brand]
     })
 
-
+st.markdown("###  Video Upload")
 uploaded_file = st.file_uploader("Upload a Video of a Commercial to get started", type=["mp4"])
 if uploaded_file is not None:
     # Read file as bytes
