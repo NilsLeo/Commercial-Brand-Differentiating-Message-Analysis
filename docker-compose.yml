@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    container_name: app
+    ports:
+      - "8502:8501"  # Streamlit port
+      - "8889:8888"  # Jupyter Notebook port
+    volumes:
+      - ./app:/app  # Mount the local app folder to the container's /app directory
+    environment:
+      - PYTHONUNBUFFERED=1  # Ensure logs are flushed to console immediately
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    runtime: nvidia
