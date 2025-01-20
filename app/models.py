@@ -114,22 +114,25 @@ def prepare_model_data(ad_df, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWAREN
     columns = ['superlative_count', 'comparative_count', 'uniqueness_count', 'total_bdm_terms_count', 'total_bdm_terms_pct', 'num_adj_noun_pairs']
 
     if INDUSTRY_SPECIFIC_AWARENESS:
-        columns += ['industry_specific_keyword_similarity']
-        [ 'product_cat_keyword_similarity']
+        columns.append('product_cat_keyword_similarity')
+
     if BRAND_SPECIFIC_AWARENESS:
-        columns += ['product_brand_keyword_similarity']
+        columns.append('product_brand_keyword_similarity')
 
     features = ad_df[columns]
     # Extract target variable
-    target = ad_df['BDM']
+    # target = ad_df['BDM']
     
-    return features, target
-
-def save_models(trained_models, output_dir='trained_models'):
+    return features
+from pathlib import Path
+import joblib
+def save_models(INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS, trained_models, output_dir='trained_models'):
     """
     Save trained models to files
     
     Parameters:
+    - INDUSTRY_SPECIFIC_AWARENESS: Boolean flag indicating industry-specific awareness
+    - BRAND_SPECIFIC_AWARENESS: Boolean flag indicating brand-specific awareness
     - trained_models: Dictionary of trained model instances
     - output_dir: Directory to save the models (default: 'trained_models')
     """
@@ -138,18 +141,26 @@ def save_models(trained_models, output_dir='trained_models'):
     
     for name, model in trained_models.items():
         # Create a safe filename from the model name
-        filename = f"{name.lower().replace(' ', '_')}.pkl"
+        filename = name  # Start with the model's name
+        filename += '_industry' if INDUSTRY_SPECIFIC_AWARENESS else ''
+        filename += '_brand' if BRAND_SPECIFIC_AWARENESS else ''
+        filename += '.pkl'  # Add file extension
+        
+        # Define the filepath
         filepath = Path(output_dir) / filename
         
-        # Save the model
+        # Print the saving message
         print(f"Saving {name} to {filepath}")
+        
+        # Save the model
         joblib.dump(model, filepath)
-
-def load_models(model_dir='trained_models'):
+def load_models(INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS, model_dir='trained_models'):
     """
-    Load trained models from files
+    Load trained models from files, considering awareness flags
     
     Parameters:
+    - INDUSTRY_SPECIFIC_AWARENESS: Boolean indicating if models are industry-specific
+    - BRAND_SPECIFIC_AWARENESS: Boolean indicating if models are brand-specific
     - model_dir: Directory containing the saved models (default: 'trained_models')
     
     Returns:
@@ -161,14 +172,31 @@ def load_models(model_dir='trained_models'):
     if not model_dir.exists():
         raise FileNotFoundError(f"Directory {model_dir} not found")
     
-    for model_file in model_dir.glob('*.pkl'):
-        name = model_file.stem.replace('_', ' ').title()
-        print(f"Loading {name} from {model_file}")
+    # Construct the awareness-based suffix
+    suffix = ''
+    if INDUSTRY_SPECIFIC_AWARENESS:
+        suffix += '_industry'
+    if BRAND_SPECIFIC_AWARENESS:
+        suffix += '_brand'
+    
+    # Load models matching the suffix
+    print(f"Loading models from {model_dir} with suffix {suffix}")
+    for model_file in model_dir.glob(f'*{suffix}.pkl'):
+        # Extract the model name by stripping the suffix and converting to title case
+        name = model_file.stem
+        if suffix:
+            name = name[:-len(suffix)]  # Remove the awareness-based suffix
+        
+        # Check if the model file matches the awareness settings
+        if (not INDUSTRY_SPECIFIC_AWARENESS and '_industry' in name) or (not BRAND_SPECIFIC_AWARENESS and '_brand' in name):
+            continue  # Skip loading this model
+        
+        print(f"{name} Loading from {model_file}")
         loaded_models[name] = joblib.load(model_file)
     
     return loaded_models
 
-def train_models(X, y, models):
+def train_models(X, y, models, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS):
     """
     Train all models in the provided dictionary
     
@@ -186,10 +214,10 @@ def train_models(X, y, models):
         print(f"Training {name}...")
         model.fit(X, y)
         trained_models[name] = model
-    save_models(trained_models)
+    save_models(INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS, trained_models)
     return trained_models
 
-# Modified evaluate_models to accept trained models
+
 def evaluate_models(X, y, trained_models, cv=5):
     """
     Evaluate trained models and return results
@@ -253,9 +281,54 @@ def evaluate_models(X, y, trained_models, cv=5):
     return results_df, predictions
 
 
+def predict_model(X, trained_models):
+    """
+    Predict using the trained models
+    
+    Parameters:
+    - X: Feature matrix
+    - trained_models: Dictionary of trained model instances
+    
+    Returns:
+    - predictions: DataFrame with predictions from each model
+    """
+    predictions = pd.DataFrame()
+    
+    for name, model in trained_models.items():
+        print(f"Making predictions with {name}...")
+        y_pred = model.predict(X)
+        predictions[f'{name}_prediction'] = y_pred
+        
+    return predictions
+
+
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+def plot_correlation_with_target(X, y):
+    """
+    Plot the correlation between features and the target variable.
+    
+    Parameters:
+    - X: Feature matrix (pandas DataFrame)
+    - y: Target variable (pandas Series or numpy array)
+    """
+    # Add target to the feature matrix for correlation calculation
+    X_with_target = X.copy()
+    X_with_target['target'] = y
+    
+    # Compute the correlation matrix
+    correlation_matrix = X_with_target.corr()
+    
+    # Plot the heatmap
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(correlation_matrix[['target']], annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+    plt.title("Correlation between Features and Target", fontsize=16)
+    plt.show()
 def plot_confusion_matrices(X, y, models):
     """
-    Plot confusion matrices for each model
+    Plot confusion matrices with percentages for each model.
     
     Parameters:
     - X: Feature matrix
@@ -277,24 +350,38 @@ def plot_confusion_matrices(X, y, models):
         # Compute confusion matrix
         cm = confusion_matrix(y, y_pred)
         
+        # Convert to percentages
+        total_negatives = cm[0, 0] + cm[0, 1]  # TN + FN
+        total_positives = cm[1, 0] + cm[1, 1]  # TP + FP
+        
+        percentage_cm = np.array([
+            [cm[0, 0] / total_negatives * 100 if total_negatives > 0 else 0,  # TN %
+             cm[0, 1] / total_negatives * 100 if total_negatives > 0 else 0],  # FN %
+            [cm[1, 0] / total_positives * 100 if total_positives > 0 else 0,  # FP %
+             cm[1, 1] / total_positives * 100 if total_positives > 0 else 0]   # TP %
+        ])
+        
         # Plot confusion matrix
         sns.heatmap(
-            cm, 
+            percentage_cm, 
             annot=True, 
-            fmt='d', 
+            fmt='.1f', 
             cmap='Blues', 
-            ax=axes[i]
+            ax=axes[i], 
+            xticklabels=['Negative', 'Positive'], 
+            yticklabels=['Negative', 'Positive']
         )
-        axes[i].set_title(f'{name} Confusion Matrix')
+        axes[i].set_title(f'{name} Confusion Matrix (Percentages)')
         axes[i].set_xlabel('Predicted Label')
         axes[i].set_ylabel('True Label')
     
     # Remove extra subplots if any
-    for j in range(i+1, len(axes)):
+    for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
     
     plt.tight_layout()
     plt.show()
+
 
 def analyze_decision_tree(data, target, models):
     print("\nDecision Tree Analysis:")
@@ -323,3 +410,4 @@ def display_model_results(data, target, models, results_df):
     print("Cross-Validation Results:\n")
     display(Markdown(results_df.to_markdown(index=False)))
     plot_confusion_matrices(data, target, models)
+    plot_correlation_with_target(data, target)

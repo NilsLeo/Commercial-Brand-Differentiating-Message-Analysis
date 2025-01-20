@@ -2,7 +2,7 @@
 FROM python:3.9.12
 
 # Install necessary utilities for Streamlit and Jupyter
-RUN apt-get update && apt-get install -y \
+RUN apt update -y && apt install -y \
   curl \
   wget \
   libportaudio2 \
@@ -10,13 +10,16 @@ RUN apt-get update && apt-get install -y \
   portaudio19-dev \
   python3-dev \
   python3-pip \
+  ffmpeg \
   libenchant-2-dev \
+  libopencv-dev \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-# TODO: Comment back in once container is good to go
-# COPY ./app/requirements.txt .
+RUN apt update -y && apt install libopencv-dev ffmpeg -y && pip install opencv-python
+
 COPY ./app/.streamlit/config.toml /root/.streamlit/
+COPY ./app/requirements.txt .
 # Upgrade pip
 RUN /usr/local/bin/python -m pip install --upgrade pip
 
@@ -24,7 +27,7 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install additional Python packages
-RUN pip install jupyter nbconvert
+RUN pip install jupyter nbconvert opencv-python
 RUN python -m spacy download en_core_web_sm
 RUN python -m spacy download en_core_web_md
 

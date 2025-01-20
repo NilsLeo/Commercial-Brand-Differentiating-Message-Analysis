@@ -9,6 +9,7 @@ from frame_extraction import extraction
 from rapidfuzz import fuzz
 import enchant
 
+
 # Wörterbuch für Englisch
 english_dict = enchant.Dict("en_US")
 
@@ -272,9 +273,6 @@ video_path = "uploaded_file.mp4"
 
 def ocr(video_path: str):
   text = process_all_ads(video_path)
-  #text = print(text)
-  #words ="Not Implemented Yet"
-  # TODO: @Giulia implement ocr
   print("cleaned_text:", text)
   return text
 
