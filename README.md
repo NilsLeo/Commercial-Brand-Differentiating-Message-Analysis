@@ -6,6 +6,18 @@
 
 This University Project aims to provide a Framework which can be used to analyse a commercial and identify whether or not this commercial contains a Brand Differentiating Message (BDM). [This Spreadsheet](BDM.xlsx) contains a list of Superbowl Ads which are labeled with either 1 (BDM) or 0 (No BDM) by the marketing faculty of my University. Due to limitations in Data Quality (Subjectivity, Binary Classification) and Quantity (only a few hundred ads, class imbalance), this project should be considered as more of a conceptual approach, rather than a model with a high accuracy.
 
+## CRISP-DM
+
+This Project is structured using the CRISP-DM Framework
+
+### 1 Business Understanding
+### 2 Data Understanding
+[Jupyter Notebook](./2 - Data Understanding.ipynb)
+### 3 Data Preparation, 4 Modeling, 5 Evaluation
+[Jupyter Notebook](./3-5 Data Preparation, Modeling, Evaluation.ipynb)
+### 6 Deployment
+[Webapp](./6 Deployment.py)
+
 Due to the small number of Ads, we used a machine learning approach, with manually engineered features, rather than just passing text through to a neural network.
 
 ## Table of Contents
