@@ -43,4 +43,4 @@ RUN /bin/bash -c "source .venv/bin/activate"
 EXPOSE 8501 8888
 
 # Command to run both Streamlit and Jupyter in the background
-CMD bash -c "source .venv/bin/activate && streamlit run app.py & jupyter notebook --ip='0.0.0.0' --port=8888 --allow-root --NotebookApp.token=''"
+CMD bash -c "source .venv/bin/activate && streamlit run '6 Deployment.py' & jupyter notebook --ip='0.0.0.0' --port=8888 --allow-root --NotebookApp.token=''"
