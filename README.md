@@ -12,7 +12,7 @@ This Project is structured using the CRISP-DM Framework
 
 ### 1 Business Understanding
 ### 2 Data Understanding
-[Jupyter Notebook](./2 - Data Understanding.ipynb)
+[Jupyter Notebook]('./2 - Data Understanding.ipynb')
 ### 3 Data Preparation, 4 Modeling, 5 Evaluation
 [Jupyter Notebook](./3-5 Data Preparation, Modeling, Evaluation.ipynb)
 ### 6 Deployment
