@@ -10,7 +10,7 @@ import models as m
 st.markdown("# Commercial Brand Differentiating Analysis Prediction Model")
 st.markdown("## Input Data")
 st.markdown("### Awareness Filters")
-
+# TODO commercial_appeal	csr_type
 ad_df = pd.DataFrame()
 INDUSTRY_SPECIFIC_AWARENESS = st.checkbox("Enable Industry Knowledge", key="industry_enabled")
 st.info('Our model knows of a select few Industries with Keywords commonly associated with a BDM. Enable this and check if your ad fits into one of these categories', icon="🔍")

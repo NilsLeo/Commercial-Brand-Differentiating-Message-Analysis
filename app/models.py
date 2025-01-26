@@ -111,19 +111,12 @@ def tune_models(X, y, models, param_distributions, cv=5, n_iter=20):
     return tuned_models
 
 def prepare_model_data(ad_df, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS):
-    columns = ['superlative_count', 'comparative_count', 'uniqueness_count', 'total_bdm_terms_count', 'total_bdm_terms_pct', 'num_adj_noun_pairs']
-
-    if INDUSTRY_SPECIFIC_AWARENESS:
-        columns.append('product_cat_keyword_similarity')
-
-    if BRAND_SPECIFIC_AWARENESS:
-        columns.append('product_brand_keyword_similarity')
-
-    features = ad_df[columns]
-    # Extract target variable
-    # target = ad_df['BDM']
-    
+    # all columns but bdm
+    columns = ad_df.columns.tolist()
+    columns.remove('BDM')
+    features = ad_df[columns]    
     return features
+
 from pathlib import Path
 import joblib
 def save_models(INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS, trained_models, output_dir='trained_models'):
