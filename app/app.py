@@ -62,7 +62,6 @@ transcript = transcribe_video(f"{os.path.dirname(os.path.abspath(__file__))}/upl
 
 st.markdown("### Transcript")
 ad_df["transcript"] = transcript
-ad_df["audio_only_transcript"] = transcript
 st.info('We have transcribe the following audio from the file you uploaded!', icon="🎙️")
 st.markdown(f"> {transcript}")
 

@@ -1,5 +1,7 @@
 
 app/.venv
+app/log.log
+app/.ipynb_checkpoints
 app/__pycache__
 app/ADs
 app/uploaded_file.mp4
