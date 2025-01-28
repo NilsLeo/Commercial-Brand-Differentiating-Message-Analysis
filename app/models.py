@@ -38,6 +38,20 @@ from sklearn.metrics import (
 import pickle
 import joblib
 from pathlib import Path
+def remove_unwanted_columns(df):
+  # Store original columns before removal
+  original_columns = df.columns.tolist()
+
+  # Remove columns which aren't numbers or categorical
+  df = df.select_dtypes(include=['number', 'category'])
+
+  # Determine which columns were removed
+  removed_columns = [col for col in original_columns if col not in df.columns]
+
+  # Display removed columns
+  print("Removed columns:", removed_columns)
+  return df
+
 
 def get_base_models():
     """Return dictionary of base model configurations"""
@@ -110,10 +124,11 @@ def tune_models(X, y, models, param_distributions, cv=5, n_iter=20):
             
     return tuned_models
 
-def prepare_model_data(ad_df, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS):
-    # all columns but bdm
+def prepare_model_data(ad_df):
+    if 'BDM' in ad_df.columns:
+        ad_df = ad_df.drop(columns=['BDM'])
     columns = ad_df.columns.tolist()
-    columns.remove('BDM')
+    columns.sort()
     features = ad_df[columns]    
     return features
 

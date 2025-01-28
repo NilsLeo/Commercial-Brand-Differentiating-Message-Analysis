@@ -7,7 +7,10 @@ def transcribe_video(video_path: str) -> str:
     try:
         torch.cuda.empty_cache()
         result = model.transcribe(video_path)
-        return result["text"]
+        transcript= result["text"]
+        if transcript == " ":
+            return " "
+        return transcript
     except Exception as e:
         print(f"Error transcribing video: {e}")
         return ""

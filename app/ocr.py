@@ -233,7 +233,9 @@ def process_all_ads(input_folder):
     """
     # Frame extraction
     frames = extraction(input_folder, kps=3)
-    
+    # Log the number of ads found
+    print(f"Number of frames found in {input_folder}: {len(frames)}")  # Logging the count of frames extracted
+
     # Führe OCR auf allen Frames durch und entfernt Wasserzeichen
     x, y, w, h=62, 545, 235, 60
     method="black"

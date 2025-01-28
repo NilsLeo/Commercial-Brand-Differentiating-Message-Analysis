@@ -7,11 +7,25 @@ import text_analysis as ta
 import ast
 import numpy as np
 import models as m
+import logging
+logging.basicConfig(
+    filename='log.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+ad_df = pd.DataFrame(index=[0])  # Initialize DataFrame with one empty row
 st.markdown("# Commercial Brand Differentiating Analysis Prediction Model")
 st.markdown("## Input Data")
 st.markdown("### Awareness Filters")
-# TODO commercial_appeal	csr_type
-ad_df = pd.DataFrame()
+encoded_emotion = st.checkbox("Is the commercial emotional?", key="encoded_emotion_enabled")
+encoded_emotion = 1 if encoded_emotion else 0
+
+csr_type = st.checkbox("Are there any CSR (Corporate Social Responsibility) elements in the commercial?", key="csr_enabled")
+csr_type = 1 if csr_type else 0
+ad_df["encoded_emotion"] = encoded_emotion
+ad_df["csr_type"] = csr_type
+ad_df["commercial_number"] = 1
 INDUSTRY_SPECIFIC_AWARENESS = st.checkbox("Enable Industry Knowledge", key="industry_enabled")
 st.info('Our model knows of a select few Industries with Keywords commonly associated with a BDM. Enable this and check if your ad fits into one of these categories', icon="🔍")
 
@@ -23,8 +37,10 @@ disabled=not st.session_state.industry_enabled,
 )
 
 if INDUSTRY_SPECIFIC_AWARENESS:
-    product_cat_keywords = product_cat_df[product_cat_df["product_cat_name"]==product_category]['product_cat_keywords'].values[0][1:-1].replace("'", "").split(", ")
-    ad_df["product_category"] = [product_category]
+    product_cat_df = pd.read_csv("product_categories.csv")
+    product_cat_keywords = product_cat_df[product_cat_df["product_cat_name"] == product_category]['product_cat_keywords']
+    ad_df["product_cat_keywords"] = product_cat_keywords
+
 
 
 BRAND_SPECIFIC_AWARENESS = st.checkbox("Enable Brand Knowledge", key="brand_enabled")
@@ -37,8 +53,14 @@ product_brand = st.selectbox(
 )
 
 if BRAND_SPECIFIC_AWARENESS:
-    product_brand_keywords = product_brand_df[product_brand_df["brand"]==product_brand]['product_brand_keywords'].values[0][1:-1].replace("'", "").split(", ")
-    ad_df["product_brand"] = [product_brand]
+    product_brand_df = pd.read_csv("product_brands.csv")
+    product_brand_keywords = product_brand_df[product_brand_df["brand"] == product_brand]['product_brand_keywords']
+    
+    ad_df["product_brand_keywords"] = product_brand_keywords.values[0]
+
+
+
+
 
 st.markdown("###  Video Upload")
 uploaded_file = st.file_uploader("Upload a Video of a Commercial to get started", type=["mp4"])
@@ -70,168 +92,111 @@ st.markdown("### OCR")
 st.info('The following words were detected in the frames of the file you uploaded!', icon="🎞️")
 # INFO use the followingfor debugging
 # ocr_text = "Your OCR text here"
+logging.info(f"ad_df: {ad_df}")
 ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
+# ocr_text = 'THREE YEARS LATER AC Coming to Things Clydesdales Budweiser Chicago 7605 JV Kc CLYDESDALES RESPONSIBLY 02013 ANHEUSER BEER St Louis MO'
+ad_df["ocr_text"] = ocr_text
 st.markdown(f"> {ocr_text}")
 
-# Add Text Analysis section
+# Add     ad_df = 
+ad_df= ta.process_pronoun_data(ad_df, 'transcript')
+ad_df = ta.process_pronoun_data(ad_df, 'ocr_text')
+ad_df = ta.process_text_data(ad_df, 'transcript')
+ad_df = ta.process_text_data(ad_df, 'ocr_text')
+ad_df["transcript_adj_noun_pairs"] = ad_df["transcript"].apply(ta.extract_adj_noun_pairs)
+ad_df["transcript_num_adj_noun_pairs"] = ad_df["transcript_adj_noun_pairs"].apply(len)
+ad_df["ocr_text_adj_noun_pairs"] = ad_df["ocr_text"].apply(ta.extract_adj_noun_pairs)
+ad_df["ocr_text_num_adj_noun_pairs"] = ad_df["ocr_text_adj_noun_pairs"].apply(len)
+
+row = ad_df.iloc[0]
+def display_results(row, text_column):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Words", row[f'{text_column}_word_count'])
+    with col2:
+        st.metric("BDM Terms", row[f'{text_column}_total_bdm_terms_count'])
+    with col3:
+        st.metric("BDM Terms %", f"{row[f'{text_column}_total_bdm_terms_pct']:.1f}%")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Superlatives**")
+        st.markdown(f"Count: {row[f'{text_column}_superlative_count']} ({row[f'{text_column}_superlative_pct']:.1f}%)")
+        st.markdown(f"> {', '.join(row[f'{text_column}_superlatives']) if row[f'{text_column}_superlatives'] else 'None found'}")
+        
+        st.markdown("**Comparatives**")
+        st.markdown(f"Count: {row[f'{text_column}_comparative_count']} ({row[f'{text_column}_comparative_pct']:.1f}%)")
+        st.markdown(f"> {''.join(row[f'{text_column}_comparatives']) if row[f'{text_column}_comparatives'] else 'None found'}")
+
+    with col2:
+        st.markdown("**Unique Words**")
+        st.markdown(f"Count: {row[f'{text_column}_uniqueness_count']} ({row[f'{text_column}_uniqueness_pct']:.1f}%)")
+        st.markdown(f"> {', '.join(row[f'{text_column}_unique_words']) if row[f'{text_column}_unique_words'] else 'None found'}")
+        
+        st.markdown("**Adjective-Noun Pairs**")
+        st.markdown(f"Count: {row[f'{text_column}_num_adj_noun_pairs']}")
+        st.markdown(f"> {', '.join(row[f'{text_column}_adj_noun_pairs']) if row[f'{text_column}_adj_noun_pairs'] else 'None found'}")
+        
+        st.markdown("**Most Common Pronoun**")
+        st.markdown(f"Pronoun: {row[f'{text_column}_most_common_pronoun']}")
+        st.markdown(f"Count: {row[f'{text_column}_most_common_pronoun_count']}")
+        st.markdown(f"Percentage: {row[f'{text_column}_most_common_pronoun_pct']:.1f}%")
+
 st.markdown("### Text Analysis")
 st.info('Here is the detailed analysis of the commercial transcript!', icon="📊")
+display_results(row, 'transcript')
+st.markdown("### OCR Analysis")
+st.info('Here is the detailed analysis of the OCR text!', icon="📊")
+display_results(row, 'ocr_text')
 
-# Process text analysis for the single video
-word_count = len(ta.get_tokens(transcript))
-superlatives = ta.get_superlatives(transcript)
-comparatives = ta.get_comparatives(transcript)
-unique_words = ta.get_unique_words(transcript)
-adj_noun_pairs = ta.extract_adj_noun_pairs(transcript)
-# Calculate counts and percentages
-superlative_count = len(superlatives)
-comparative_count = len(comparatives)
-uniqueness_count = len(unique_words)
-total_bdm_terms_count = superlative_count + comparative_count + uniqueness_count
-num_adj_noun_pairs = len(adj_noun_pairs)
+def display_match(header, text, keywords, group):
+    st.markdown(f"#### {header}")
+    st.info(f'Here is the comparison of the {header} with the keywords!', icon="🔍")
+    if group == 'product_cat':
+        st.markdown(f"**Category**: {product_category}")
+    elif group == 'product_brand':
+        st.markdown(f"**Brand**: {product_brand}")
+    st.markdown("**Keywords**:")
+    st.code(', '.join(keyword.strip() for keyword in keywords))
+    ad_df[f"{text}_product_cat_keywords"] = ', '.join(keywords)
+    st.markdown("##### **Top Matching Keywords:**")
+    s = ''
+    for keyword in ad_df[f"{text}_{group}_keywords_top_keywords"].iloc[0].split(', '):
+        s += "- " + keyword + "\n" 
+    st.markdown(s)
 
-superlative_pct = (superlative_count / word_count * 100) if word_count > 0 else 0
-comparative_pct = (comparative_count / word_count * 100) if word_count > 0 else 0
-uniqueness_pct = (uniqueness_count / word_count * 100) if word_count > 0 else 0
-total_bdm_terms = superlative_count + comparative_count + uniqueness_count
-total_bdm_pct = round((total_bdm_terms / word_count * 100), 2) if word_count > 0 else 0
-
-
-# Display results
-st.markdown("#### Word Statistics")
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric("Total Words", word_count)
-with col2:
-    st.metric("BDM Terms", total_bdm_terms)
-with col3:
-    st.metric("BDM Terms %", f"{total_bdm_pct:.1f}%")
-
-st.markdown("#### Detailed Analysis")
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("**Superlatives**")
-    st.markdown(f"Count: {superlative_count} ({superlative_pct:.1f}%)")
-    st.markdown(f"> {', '.join(superlatives) if superlatives else 'None found'}")
-    
-    st.markdown("**Comparatives**")
-    st.markdown(f"Count: {comparative_count} ({comparative_pct:.1f}%)")
-    st.markdown(f"> {', '.join(comparatives) if comparatives else 'None found'}")
-
-with col2:
-    st.markdown("**Unique Words**")
-    st.markdown(f"Count: {uniqueness_count} ({uniqueness_pct:.1f}%)")
-    st.markdown(f"> {', '.join(unique_words) if unique_words else 'None found'}")
-    
-    st.markdown("**Adjective-Noun Pairs**")
-    st.markdown(f"Count: {num_adj_noun_pairs}")
-    st.markdown(f"> {', '.join(adj_noun_pairs) if adj_noun_pairs else 'None found'}")
-
-# Update the DataFrame with the analysis results
-superlatives = ', '.join(superlatives) if superlatives else ''
-comparatives = ', '.join(comparatives) if comparatives else ''
-unique_words = ', '.join(unique_words) if unique_words else ''
-total_bdm_pct = total_bdm_pct
-
+    st.markdown("##### Average Semantic Similarity of top 3")
+    st.metric('',f"{ad_df[f'{text}_{group}_keywords_similarity'].values[0]}")
+    st.progress(ad_df[f'{text}_{group}_keywords_similarity'].values[0])
 
 if INDUSTRY_SPECIFIC_AWARENESS:
-
+    ad_df = ta.calculate_semantic_similarities(ad_df, 'transcript', 'product_cat_keywords')
+    ad_df = ta.calculate_semantic_similarities(ad_df, 'ocr_text', 'product_cat_keywords')
     st.markdown("### Product Category Specificity")
-    st.info('Here is the comparison of the commercial transcript with the product category keywords!', icon="🔍")
-
-    st.markdown(f"**Category**: {product_category}")
-    st.markdown("**Keywords**:")
-    st.code(', '.join(keyword.strip() for keyword in product_cat_keywords))
-    ad_df["product_cat_keywords"] = ', '.join(product_cat_keywords)
-
-    # Calculate category similarities
-    product_cat_keyword_similarities = {
-        keyword: round(float(ta.get_semantic_similarity(transcript, keyword)), 3)
-        for keyword in product_cat_keywords
-    }
-
-    # Get top 3 category matches
-    cat_sorted_keywords = sorted(product_cat_keyword_similarities.items(), key=lambda x: x[1], reverse=True)
-    cat_top_3 = cat_sorted_keywords[:3]
-    cat_top_3_avg = round(float(np.mean([sim for _, sim in cat_top_3])), 3)
-
-    # Display category metrics
-    st.metric("Category Match Score", f"{cat_top_3_avg:.3f}")
-    st.markdown("**Top Matching Keywords (Average of the following top 3):**")
-    for keyword, similarity in cat_top_3:
-        st.progress(similarity)
-        st.caption(f"{keyword}: {similarity:.3f}")
-
-    ad_df['product_cat_keyword_similarity'] = cat_top_3_avg
-    ad_df['product_cat_top_keywords'] = ', '.join([keyword for keyword, _ in cat_top_3])
-
+    display_match('Transcript', 'transcript', product_cat_keywords, 'product_cat')
+    display_match('OCR', 'ocr_text', product_cat_keywords, 'product_cat')
 if BRAND_SPECIFIC_AWARENESS:
 
-    st.markdown("### Brand Specificity")
-    st.info('Here is the comparison of the commercial transcript with the brand keywords!', icon="🔍")
+    ad_df = ta.calculate_semantic_similarities(ad_df, 'transcript', 'product_brand_keywords')
+    ad_df = ta.calculate_semantic_similarities(ad_df, 'ocr_text', 'product_brand_keywords')
+    st.markdown("### Product Brand Specificity")
+    display_match('Transcript', 'transcript', product_brand_keywords, 'product_brand')
+    display_match('OCR', 'ocr_text', product_brand_keywords, 'product_brand')
 
-    st.markdown(f"**Brand**: {product_brand}")
-    st.markdown("**Keywords**:")
-    st.code(', '.join(keyword.strip() for keyword in product_brand_keywords))
-    ad_df["product_brand_keywords"] = ', '.join(product_brand_keywords)
-
-    # Calculate brand similarities
-    product_brand_keyword_similarities = {
-        keyword: round(float(ta.get_semantic_similarity(transcript, keyword)), 3)
-        for keyword in product_brand_keywords
-    }
-
-    # Get top 3 brand matches
-    brand_sorted_keywords = sorted(product_brand_keyword_similarities.items(), key=lambda x: x[1], reverse=True)
-    brand_top_3 = brand_sorted_keywords[:3]
-    brand_top_3_avg = round(float(np.mean([sim for _, sim in brand_top_3])), 3)
-
-    # Display brand metrics
-    st.metric("Brand Match Score (Average of the following top 3)", f"{brand_top_3_avg:.3f}")
-    st.markdown("**Top Matching Keywords:**")
-    for keyword, similarity in brand_top_3:
-        st.progress(similarity)
-        st.caption(f"{keyword}: {similarity:.3f}")
-
-    ad_df['product_brand_keyword_similarity'] =brand_top_3_avg
-    ad_df['product_brand_top_keywords'] = ', '.join([keyword for keyword, _ in brand_top_3])
 def beautify_df(df):
     for col in df.columns:
         st.write(f"**{col.capitalize()}** : {df.loc[0, col]}")
 
-st.markdown("### Final Overview of all Data")
+
 
 
 # Assuming ad_df is your DataFrame
 
 # Sample DataFrame with existing columns
-df = pd.DataFrame(columns = ['superlative_count', 'comparative_count', 'uniqueness_count', 'total_bdm_terms_count', 'total_bdm_terms_pct', 'num_adj_noun_pairs']
-)
-
-
-# New row to add
-new_row = {
-    'superlative_count': superlative_count,
-    'comparative_count': comparative_count,
-    'uniqueness_count': uniqueness_count,
-    'total_bdm_terms_count': total_bdm_terms_count,
-    'total_bdm_terms_pct': total_bdm_pct,
-    'num_adj_noun_pairs': num_adj_noun_pairs
-}
-if INDUSTRY_SPECIFIC_AWARENESS:
-    new_row['product_cat_keyword_similarity'] = cat_top_3_avg
-if BRAND_SPECIFIC_AWARENESS:
-    new_row['product_brand_keyword_similarity']=brand_top_3_avg
-
-# Convert new_row to a DataFrame
-new_row_df = pd.DataFrame([new_row])
-
-# Add the new row to the existing DataFrame
-df = pd.concat([df, new_row_df], ignore_index=True)
 # Add the new row to the DataFrame
 # Display the DataFrame
 # Use pd.concat to append the new row
-temp_df = df.copy()
+temp_df = ad_df.copy()
 temp_df.rename(columns={
     'superlative_count': 'Superlative Count',
     'comparative_count': 'Comparative Count',
@@ -240,14 +205,15 @@ temp_df.rename(columns={
     'total_bdm_terms_pct': 'Total BDM Terms Percentage',
     'num_adj_noun_pairs': 'Number of Adjective-Noun Pairs'
 }, inplace=True)
-st.write(beautify_df(temp_df))
+# st.write(beautify_df(temp_df))
 # add new row to ad_df with transcript and ocr text
 
-
+ad_df.drop(columns=['commercial_number'], inplace=True)
+ad_df = m.remove_unwanted_columns(ad_df)
 trained_models = m.load_models(INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS)
 
 # Continue with your data preparation
-data = m.prepare_model_data(df, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS)
+data = m.prepare_model_data(ad_df)
 prediction = m.predict_model(data, trained_models)
 majority_vote = prediction[['Logistic Regression_prediction', 'Random Forest_prediction', 'Support Vector Machine_prediction']].mode(axis=1).iloc[0, 0]
 # results_df, predictions = m.evaluate_models(data, target, trained_models)
@@ -259,8 +225,6 @@ def vote(majority_vote):
     else:
         st.error("❌ Our models predict that this commercial does not contain a strong BDM.")
     st.write(prediction)
-
-# Call the vote function with the majority_vote variable
-vote(majority_vote)
-
-# st.write(results_df)
+st.markdown("## Result")
+if st.button("Click to see Result"):
+    vote(majority_vote)
