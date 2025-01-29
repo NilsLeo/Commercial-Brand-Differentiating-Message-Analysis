@@ -8,6 +8,8 @@ import spacy
 from frame_extraction import extraction
 from rapidfuzz import fuzz
 import enchant
+import numpy as np
+from PIL import Image, ImageEnhance, ImageFilter
 
 
 # Wörterbuch für Englisch
@@ -17,26 +19,47 @@ english_dict = enchant.Dict("en_US")
 nlp = spacy.load("en_core_web_md")
 
 # 1. OCR durchführen
-
-# Funktion: Wasserzeichen-Bereich abdecken
 def cover_watermark(frame, x, y, w, h, method="black"):
-    """
-    Überdeckt den Wasserzeichen-Bereich in einem Bild.
-    Args:
-    - frame: Das Bild/Frame (numpy-Array)
-    - x, y: Obere linke Ecke des Wasserzeichen-Bereichs
-    - w, h: Breite und Höhe des Wasserzeichen-Bereichs
-    - method: Methode zum Abdecken ("black" oder "blur")
-    """
-    roi = frame[y:y+h, x:x+w]
     if method == "black":
-        # Füllt den Bereich mit Schwarz
-        frame[y:y+h, x:x+w] = (0, 0, 0)
-    elif method == "blur":
-        # Wendet einen Weichzeichner auf den Bereich an
-        frame[y:y+h, x:x+w] = cv2.GaussianBlur(roi, (15, 15), 0)
+        frame[y:y+h, x:x+w] = 0  # Bereich mit Schwarz füllen
     return frame
 
+def preprocess_image(frame, x, y, w, h, enhance_contrast=1.5, sharpen=True):
+    #Verarbeitet ein Frame: Graustufen, Kontrastverstärkung, Schärfen und Wasserzeichen-Abdeckung.
+    # Bild laden
+    if frame is None:
+        raise ValueError("Fehler: Übergebenes Frame ist 'None'.")
+    # Bild in Graustufen umwandeln
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    # Graustufenbild in PIL-Format konvertieren
+    pil_image = Image.fromarray(gray_frame)
+    
+    # Kontrast verstärken
+    if enhance_contrast > 1.0:
+        enhancer = ImageEnhance.Contrast(pil_image)
+        pil_image = enhancer.enhance(enhance_contrast)
+    
+    # Schärfen
+    if sharpen:
+        pil_image = pil_image.filter(ImageFilter.SHARPEN)
+    
+    # Zurück zu OpenCV-Format
+    processed_frame  = np.array(pil_image)
+    
+    # Wasserzeichen abdecken
+    processed_frame  = cover_watermark(processed_frame, x, y, w, h, method="black")
+    
+    return processed_frame 
+
+def filter_results(results, min_height=24, min_confidence=0.9):
+    filtered_results = []
+    for bbox, text, confidence in results:
+        # Höhe berechnen (Differenz der y-Koordinaten)
+        height = abs(bbox[2][1] - bbox[0][1])  # untere y-Koordinate - obere y-Koordinate
+        if height >= min_height and confidence >= min_confidence:
+            filtered_results.append((bbox, text, confidence))
+    return filtered_results
 
 def process_frames_with_watermark_removal(frames, x, y, w, h, method="black"):
     """
@@ -55,17 +78,20 @@ def process_frames_with_watermark_removal(frames, x, y, w, h, method="black"):
     # Iteriere durch alle Frames
     for frame_idx, frame in enumerate(frames):
         # Abdeckung des Wasserzeichens
-        frame = cover_watermark(frame, x, y, w, h, method)
+        processed_frame  = preprocess_image(frame, x, y, w, h, enhance_contrast=1.5, sharpen=True)
 
         # Perform text recognition with EasyOCR (nur auf das abgedeckte Bild)
         reader = Reader(['en'], gpu=True)
         if reader is not None:
-            ocr_results = reader.readtext(frame)
+            ocr_results = reader.readtext(processed_frame)
         else:
             raise ValueError("Ein EasyOCR-Reader muss übergeben werden!")
 
+        # Filter OCR-Ergebnisse
+        filtered_ocr_results = filter_results(ocr_results, min_height=24, min_confidence=0.4)
+
         # Ergebnisse speichern
-        for (bbox, text, prob) in ocr_results:
+        for (bbox, text, prob) in filtered_ocr_results:
             # Überprüfe, ob der Text gültig ist (nicht leer oder nur Sonderzeichen)
             if text and text.strip() and len(text.strip()) > 1:  # Sicherstellen, dass der Text sinnvoll ist
                 results_list.append({
@@ -197,10 +223,14 @@ def clean_recognized_text_with_spacy(text):
         str: Bereinigter Text.
     """
     # 1. Bindestriche durch Leerzeichen ersetzen. Sonderzeichen entfernen, nur alphanumerische Zeichen und Leerzeichen behalten
+    # Ersetze Bindestriche durch Leerzeichen
     cleaned_text0 = re.sub(r"-", " ", text)
-    cleaned_text1 = re.sub(r"[^\w\s']|(?<=\s)'|'(?=\s)", "", cleaned_text0)
-    cleaned_text = re.sub(r"(?<=\w)'(?!\w)", "", cleaned_text1)
-    #print("Bereinigter Text ohne Sonderzeichen:", cleaned_text)
+    # Entferne alle Sonderzeichen außer %, wenn es direkt nach einer Zahl steht
+    cleaned_text1 = re.sub(r"[^\w\s%']|(?<=\s)'|'(?=\s)", "", cleaned_text0)
+    # Entferne Apostrophe, die nicht zwischen zwei Buchstaben stehen
+    cleaned_text2 = re.sub(r"(?<=\w)'(?!\w)", "", cleaned_text1)
+    # Entferne % wenn es NICHT direkt hinter einer Zahl steht
+    cleaned_text = re.sub(r"(?<!\d)%", "", cleaned_text2)
 
     # 2. Text in Wörter aufteilen und in Kleinbuchstaben umwandeln
     words_in_text = cleaned_text.split()
@@ -241,13 +271,12 @@ def process_all_ads(input_folder):
     method="black"
     ocr_df = process_frames_with_watermark_removal(frames, x, y, w, h, method)
 
-    # df frames sortieren
-    #sorted_ocr_df = sort_frames(ocr_df,"Frame")
-    #print('succesful sorted')
-
     #2 Bereinige und kombiniere die Texte
     final_ocr_df = create_cleaned_dataframe(ocr_df,text_column="Recognized_Text", threshold=50)
     #print('succesful grouped')
+    # Zeige das bereinigte OCR-Ergebnis
+    #print(" Finales OCR-Ergebnis nach Bereinigung:")
+    #print(final_ocr_df.to_string(index=False))
 
     # Daten mit Wörterbuch abgleichen und 
     final_ocr_df["cleaned_text"] = final_ocr_df["Recognized_Text"].apply(clean_recognized_text_with_spacy)
@@ -259,19 +288,6 @@ def process_all_ads(input_folder):
 
     return cleaned_text
 
-#test-------------------
-#video_path = "uploaded_file.mp4"
-#text = process_all_ads(video_path)
-#print()
-# Lade spaCy-Modell und englische Wörterbuch
-#nlp = spacy.load("en_core_web_md")
-#english_dict = enchant.Dict("en_US")
-
-# Initialisiere EasyOCR mit der gewünschten Sprache (in dem Fall Englisch)
-#reader = Reader(['en'], gpu=True)
-
-# Frame extraction
-video_path = "uploaded_file.mp4"
 
 def ocr(video_path: str):
   text = process_all_ads(video_path)
