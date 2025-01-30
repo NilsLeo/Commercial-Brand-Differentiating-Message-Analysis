@@ -418,4 +418,3 @@ def display_model_results(data, target, models, results_df):
     print("Cross-Validation Results:\n")
     display(Markdown(results_df.to_markdown(index=False)))
     plot_confusion_matrices(data, target, models)
-    plot_correlation_with_target(data, target)
