@@ -108,6 +108,33 @@ ad_df["transcript_num_adj_noun_pairs"] = ad_df["transcript_adj_noun_pairs"].appl
 ad_df["ocr_text_adj_noun_pairs"] = ad_df["ocr_text"].apply(ta.extract_adj_noun_pairs)
 ad_df["ocr_text_num_adj_noun_pairs"] = ad_df["ocr_text_adj_noun_pairs"].apply(len)
 
+# Add pronoun detection to DataFrame
+ad_df['transcript_contains_i'] = ad_df['transcript'].apply(ta.contains_i)
+ad_df['ocr_text_contains_i'] = ad_df['ocr_text'].apply(ta.contains_i)
+ad_df['transcript_contains_we'] = ad_df['transcript'].apply(ta.contains_we)
+ad_df['ocr_text_contains_we'] = ad_df['ocr_text'].apply(ta.contains_we)
+ad_df['transcript_contains_you'] = ad_df['transcript'].apply(ta.contains_you)
+ad_df['ocr_text_contains_you'] = ad_df['ocr_text'].apply(ta.contains_you)
+ad_df['transcript_contains_he'] = ad_df['transcript'].apply(ta.contains_he)
+ad_df['ocr_text_contains_he'] = ad_df['ocr_text'].apply(ta.contains_he)
+ad_df['transcript_contains_she'] = ad_df['transcript'].apply(ta.contains_she)
+ad_df['ocr_text_contains_she'] = ad_df['ocr_text'].apply(ta.contains_she)
+ad_df['transcript_contains_it'] = ad_df['transcript'].apply(ta.contains_it)
+ad_df['ocr_text_contains_it'] = ad_df['ocr_text'].apply(ta.contains_it)
+ad_df['transcript_contains_they'] = ad_df['transcript'].apply(ta.contains_they)
+ad_df['ocr_text_contains_they'] = ad_df['ocr_text'].apply(ta.contains_they)
+# Display found pronouns on the frontend, differentiated by source
+def display_pronouns(ad_df, text_column, display_header):
+    pronouns = ['i', 'we', 'you', 'he', 'she', 'it', 'they']
+    found_pronouns = []
+    for pronoun in pronouns:
+        if any(ad_df[f'{text_column}_contains_{pronoun}']):
+            found_pronouns.append(pronoun)
+    if found_pronouns:
+        st.markdown(f"**{display_header} Found pronouns:** {', '.join(found_pronouns)}")
+    else:
+        st.markdown(f"**{display_header} No pronouns found.**")
+
 row = ad_df.iloc[0]
 def display_results(row, text_column):
     col1, col2, col3 = st.columns(3)
@@ -145,9 +172,18 @@ def display_results(row, text_column):
 st.markdown("### Text Analysis")
 st.info('Here is the detailed analysis of the commercial transcript!', icon="📊")
 display_results(row, 'transcript')
+display_pronouns(ad_df, 'transcript', 'Transcript')
 st.markdown("### OCR Analysis")
 st.info('Here is the detailed analysis of the OCR text!', icon="📊")
 display_results(row, 'ocr_text')
+display_pronouns(ad_df, 'ocr_text', 'OCR')
+
+# Call the function to display pronouns under each analysis section
+st.markdown("### Transcript Text Analysis")
+
+
+st.markdown("### OCR Text Analysis")
+
 
 def display_match(header, text, keywords, group):
     st.markdown(f"#### {header}")
@@ -213,7 +249,7 @@ ad_df = m.remove_unwanted_columns(ad_df)
 trained_models = m.load_models(INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS)
 
 # Continue with your data preparation
-data = m.prepare_model_data(ad_df)
+data = ad_df
 prediction = m.predict_model(data, trained_models)
 majority_vote = prediction[['Logistic Regression_prediction', 'Random Forest_prediction', 'Support Vector Machine_prediction']].mode(axis=1).iloc[0, 0]
 # results_df, predictions = m.evaluate_models(data, target, trained_models)
@@ -228,3 +264,4 @@ def vote(majority_vote):
 st.markdown("## Result")
 if st.button("Click to see Result"):
     vote(majority_vote)
+    

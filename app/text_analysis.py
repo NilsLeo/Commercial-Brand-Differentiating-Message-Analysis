@@ -118,8 +118,11 @@ def extract_keywords_list(df_column):
     return keywords_list
 
 def calculate_semantic_similarities(df, text_column, keyword_column):
-
     for idx, row in df.iterrows():
+        # Skip rows where keyword column is null, NaN, or empty
+        if pd.isna(row[keyword_column]) or row[keyword_column].strip() == "":
+            continue
+
         text = row[text_column]
         logging.info(f"Keyword column: {row[keyword_column]}")
         keywords = row[keyword_column].strip("[]").replace("'", "").split(', ')
@@ -284,6 +287,44 @@ def extract_features(text):
     return features
 
 def apply_on_transcript(text):
+    # Check if the input is not a string or is empty
+    if not isinstance(text, str) or not text:
+        return []
+    
     found_pairs = extract_features(text)
-    #print(f"Founded {(found_pairs[1])} pairs")
     return found_pairs
+
+def contains_i(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'i' in re.findall(r'\bI\b', transcript, flags=re.IGNORECASE)
+
+def contains_we(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'we' in re.findall(r'\bWE\b', transcript, flags=re.IGNORECASE)
+
+def contains_you(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'you' in re.findall(r'\bYOU\b', transcript, flags=re.IGNORECASE)
+
+def contains_he(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'he' in re.findall(r'\bHE\b', transcript, flags=re.IGNORECASE)
+
+def contains_she(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'she' in re.findall(r'\bSHE\b', transcript, flags=re.IGNORECASE)
+
+def contains_it(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'it' in re.findall(r'\bIT\b', transcript, flags=re.IGNORECASE)
+
+def contains_they(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'they' in re.findall(r'\bTHEY\b', transcript, flags=re.IGNORECASE)
