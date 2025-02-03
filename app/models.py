@@ -35,22 +35,7 @@ from sklearn.metrics import (
     classification_report
 )
 
-import pickle
-import joblib
-from pathlib import Path
-def remove_unwanted_columns(df):
-  # Store original columns before removal
-  original_columns = df.columns.tolist()
-
-  # Remove columns which aren't numbers or categorical
-  df = df.select_dtypes(include=['number', 'category'])
-
-  # Determine which columns were removed
-  removed_columns = [col for col in original_columns if col not in df.columns]
-
-  # Display removed columns
-  print("Removed columns:", removed_columns)
-  return df
+import shap
 
 
 def get_base_models():
@@ -124,13 +109,6 @@ def tune_models(X, y, models, param_distributions, cv=5, n_iter=20):
             
     return tuned_models
 
-def prepare_model_data(ad_df):
-    if 'BDM' in ad_df.columns:
-        ad_df = ad_df.drop(columns=['BDM'])
-    columns = ad_df.columns.tolist()
-    columns.sort()
-    features = ad_df[columns]    
-    return features
 
 from pathlib import Path
 import joblib
@@ -238,16 +216,17 @@ def evaluate_models(X, y, trained_models, cv=5):
     
     Returns:
     - results_df: DataFrame with model performance metrics
-    - predictions: DataFrame with prediction categories (TP, TN, FP, FN)
+    - predictions: Dictionary with actual predictions for each model
     """
     results = []
-    predictions = pd.DataFrame()
+    predictions = {}  # Changed to store actual predictions
     
     for name, model in trained_models.items():
         print(f"Evaluating {name}...")
         
         # Get predictions
         y_pred = model.predict(X)
+        predictions[name] = y_pred  # Store actual predictions
         
         # Create confusion matrix categories
         pred_categories = []
@@ -260,8 +239,6 @@ def evaluate_models(X, y, trained_models, cv=5):
                 pred_categories.append('FN')
             else:  # true == 1 and pred == 1
                 pred_categories.append('TP')
-        
-        predictions[f'{name}_result'] = pred_categories
         
         # Perform cross-validation
         cv_results = cross_validate(
@@ -334,61 +311,40 @@ def plot_correlation_with_target(X, y):
     sns.heatmap(correlation_matrix[['target']], annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
     plt.title("Correlation between Features and Target", fontsize=16)
     plt.show()
-def plot_confusion_matrices(X, y, models):
+
+
+
+
+def plot_confusion_matrices(X, y, predictions):
+    colors = ['#AFCAE2', '#F1BEA1', '#5694CE', '#E4E1DA', '#A4CD91', '#C6D6C5']
+    sns.set_palette(colors)
     """
-    Plot confusion matrices with percentages for each model.
+    Plot confusion matrices with absolute numbers and percentages for each model.
     
     Parameters:
     - X: Feature matrix
     - y: Target variable
-    - models: Dictionary of tuned models
+    - predictions: Dictionary of predictions for each model
     """
-    n_models = len(models)
-    fig, axes = plt.subplots(
-        nrows=(n_models + 1) // 2, 
-        ncols=2, 
-        figsize=(16, 4 * ((n_models + 1) // 2))
-    )
-    axes = axes.ravel()  # Flatten axes array
-    
-    for i, (name, model) in enumerate(models.items()):
-        # Predict using the model
-        y_pred = model.predict(X)
-        
-        # Compute confusion matrix
+    # Iterate over each model's predictions
+    for name, y_pred in predictions.items():
+        # Calculate the confusion matrix
         cm = confusion_matrix(y, y_pred)
+        # Normalize the confusion matrix to show percentages
+        cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         
-        # Convert to percentages
-        total_negatives = cm[0, 0] + cm[0, 1]  # TN + FN
-        total_positives = cm[1, 0] + cm[1, 1]  # TP + FP
+        # Combine absolute and normalized values for annotation
+        labels = (np.asarray(["{0:0.0f}\n({1:.2%})".format(value, value_norm)
+                              for value, value_norm in zip(cm.flatten(), cm_normalized.flatten())])
+                  .reshape(cm.shape))
         
-        percentage_cm = np.array([
-            [cm[0, 0] / total_negatives * 100 if total_negatives > 0 else 0,  # TN %
-             cm[0, 1] / total_negatives * 100 if total_negatives > 0 else 0],  # FN %
-            [cm[1, 0] / total_positives * 100 if total_positives > 0 else 0,  # FP %
-             cm[1, 1] / total_positives * 100 if total_positives > 0 else 0]   # TP %
-        ])
-        
-        # Plot confusion matrix
-        sns.heatmap(
-            percentage_cm, 
-            annot=True, 
-            fmt='.1f', 
-            cmap='Blues', 
-            ax=axes[i], 
-            xticklabels=['Negative', 'Positive'], 
-            yticklabels=['Negative', 'Positive']
-        )
-        axes[i].set_title(f'{name} Confusion Matrix (Percentages)')
-        axes[i].set_xlabel('Predicted Label')
-        axes[i].set_ylabel('True Label')
-    
-    # Remove extra subplots if any
-    for j in range(i + 1, len(axes)):
-        fig.delaxes(axes[j])
-    
-    plt.tight_layout()
-    plt.show()
+        # Plotting
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(cm, annot=labels, fmt="", cmap='Blues', annot_kws={"size": 22}) 
+        plt.title(f"Confusion Matrix for {name}")
+        plt.xlabel('Predicted label')
+        plt.ylabel('True label') 
+        plt.show()
 
 
 def analyze_decision_tree(data, target, models):
@@ -413,8 +369,113 @@ def analyze_decision_tree(data, target, models):
     for f in range(data.shape[1]):
         print(f"{f + 1}. {data.columns[indices[f]]}: {importances[indices[f]]:.3f}")
 
-def display_model_results(data, target, models, results_df):
 
-    print("Cross-Validation Results:\n")
-    display(Markdown(results_df.to_markdown(index=False)))
-    plot_confusion_matrices(data, target, models)
+def display_xai(data, target):
+  X = data
+  y = target
+  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+  rf = RandomForestClassifier(n_estimators=30, max_depth=20, random_state=0, max_features='sqrt',\
+                              class_weight='balanced')
+  rf.fit(X_train, y_train)
+  y_pred_test = rf.predict(X_test)
+  samples = X_train
+  explainer = shap.TreeExplainer(rf)
+  shap_values = explainer.shap_values(X_train, approximate=False, check_additivity=False)
+  shap_values_class_1 = shap_values[:, :, 1]
+  shap.summary_plot(shap_values_class_1, X_train)
+
+def display_model_results(data, target, models, results_df, predictions):
+
+    display(Markdown("## Cross-Validation Results:\n"))
+    display(results_df)
+    display(Markdown("## XAI:\n"))
+    display_xai(data, target)
+    display(Markdown("## Confusion Matrices:\n"))
+    plot_confusion_matrices(data, target, predictions)
+
+def prepare_df_for_modeling(df):
+    columns_to_remove = [
+        # 'transcript_superlative_count',
+        # 'transcript_comparative_count',
+        # 'transcript_uniqueness_count',
+        # 'transcript_total_bdm_terms_count',
+        # 'ocr_text_superlative_count',
+        # 'ocr_text_comparative_count',
+        # 'ocr_text_uniqueness_count',
+        # 'ocr_text_total_bdm_terms_count',
+        # 'transcript_num_comparisons',
+        # 'ocr_text_num_comparisons',
+        # 'product_cat_name',
+        # 'brand',
+        # 'product_brand_name'
+    ]
+    boolean_columns_to_keep = [
+    'csr_type',
+    'BDM',
+    'encoded_emotion',
+    'transcript_contains_i',
+    'ocr_text_contains_i',
+    'transcript_contains_we',
+    'ocr_text_contains_we',
+    'transcript_contains_you',
+    'ocr_text_contains_you',
+    'transcript_contains_he',
+    'ocr_text_contains_he',
+    'transcript_contains_she',
+    'ocr_text_contains_she',
+    'transcript_contains_it',
+    'ocr_text_contains_it',
+    'transcript_contains_they',
+    ]
+
+    integer_columns_to_keep = [
+        'transcript_superlative_count',
+        'transcript_comparative_count',
+        'transcript_uniqueness_count',
+        'transcript_total_bdm_terms_count',
+        'ocr_text_superlative_count',
+        'ocr_text_comparative_count',
+        'ocr_text_uniqueness_count',
+        'ocr_text_total_bdm_terms_count',
+        'transcript_num_adj_noun_pairs',
+        'ocr_text_num_adj_noun_pairs',
+        'transcript_num_comparisons',
+        'ocr_text_num_comparisons',
+    ]
+    float_columns_to_keep = [
+        'transcript_superlative_pct',
+        'transcript_comparative_pct',
+        'transcript_uniqueness_pct',
+        'transcript_total_bdm_terms_pct',
+        'ocr_text_superlative_pct',
+        'ocr_text_comparative_pct',
+        'ocr_text_uniqueness_pct',
+        'ocr_text_total_bdm_terms_pct',
+        'transcript_product_cat_keywords_similarity',
+        'ocr_text_product_cat_keywords_similarity',
+        'transcript_product_brand_keywords_similarity',
+        'ocr_text_product_brand_keywords_similarity',
+
+    ]
+    text_columns_to_keep = [
+        'commercial_number',
+    ]
+
+    for col in integer_columns_to_keep:
+        if col in df.columns:
+            df[col] = df[col].astype(int)
+
+    for col in float_columns_to_keep:
+        if col in df.columns:
+            df[col] = df[col].astype(float)
+    for col in boolean_columns_to_keep:
+        if col in df.columns:
+            df[col] = df[col].astype(int)
+    for col in text_columns_to_keep:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
+    df = df.loc[:, (df.columns.isin(boolean_columns_to_keep) | df.columns.isin(integer_columns_to_keep) | df.columns.isin(float_columns_to_keep) | df.columns.isin(text_columns_to_keep))]
+
+    # lastly sort the columns alphabetically
+    df = df.reindex(sorted(df.columns), axis=1)
+    return df

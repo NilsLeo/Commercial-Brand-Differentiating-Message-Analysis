@@ -5,12 +5,20 @@ import matplotlib.pyplot as plt
 import re
 import enchant
 import spacy
-from frame_extraction import extraction
 from rapidfuzz import fuzz
 import enchant
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
+import logging
+import gc  # Import garbage collector interface
 
+
+logging.basicConfig(
+    filename='log.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 # Wörterbuch für Englisch
 english_dict = enchant.Dict("en_US")
@@ -253,6 +261,50 @@ def clean_recognized_text_with_spacy(text):
     return final_cleaned_text
 
 
+def extraction(video_path, kps):
+    """
+    Extrahiert Frames aus einem Video basierend auf einer definierten Keyframes-per-Second (KPS)-Rate
+    und speichert sie im Arbeitsspeicher.
+
+    Args:
+        video_path (str): Pfad zur Videodatei.
+        kps (int): Anzahl der Keyframes pro Sekunde.
+
+    Returns:
+        list: Liste von Frames (jeder Frame ist ein NumPy-Array).
+    """
+    # Überprüfen, ob die Video-Datei existiert
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise ValueError(f"Das Video {video_path} konnte nicht geöffnet werden.")
+
+    # Video-Eigenschaften
+    fps = round(cap.get(cv2.CAP_PROP_FPS))
+    hop = max(1, round(fps / kps))  # Sicherheitscheck für hop
+    curr_frame = 0
+    frames = []  # Liste, um die extrahierten Frames zu speichern
+
+    # Frame-Extraktion
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break  # Video-Ende erreicht
+
+        if curr_frame % hop == 0:
+            frames.append(frame)  # Speichere Frame im Speicher
+
+        curr_frame += 1
+
+    # Ressourcen freigeben
+    cap.release()
+
+    #print(f"{len(frames)} Frames wurden erfolgreich extrahiert.")
+    return frames
+
+VIDEO_PATH = "uploaded_file.mp4"
+KPS = 5  # Keyframes pro Sekunde
+
+
 def process_all_ads(input_folder):
     """
     Hauptpipeline, die alle Schritte für die Verarbeitung aller Werbungen durchführt.
@@ -285,12 +337,14 @@ def process_all_ads(input_folder):
     # Alle Texte aus 'cleaned_text' werden als String ausgegeben
     cleaned_text = " ".join(final_ocr_df["cleaned_text"].dropna().tolist())
     #print("cleaned_text:", cleaned_text)
-
+    logging.info(f"cleaned_text: {cleaned_text}")
     return cleaned_text
 
 
 def ocr(video_path: str):
-  text = process_all_ads(video_path)
-  print("cleaned_text:", text)
-  return text
+    # Attempt to clear VRAM by deleting large objects and collecting garbage
+    gc.collect()
+    text = process_all_ads(video_path)
+    print("cleaned_text:", text)
+    return text
 
