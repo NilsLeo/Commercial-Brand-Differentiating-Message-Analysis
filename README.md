@@ -66,7 +66,7 @@ jupyter server list
 This will retrieve the token.
 
 #### Other Editors
-If you prefer to use a different editor, you can work on the files in the [app](./app/) directory outside of the container. You will need to install the dependencies yourself on your host OS. These can be seen in the [Dockerfile](./Dockerfile).
+If you prefer to use a different editor, you can work on the files in the [app](./app/) directory outside of the container. You will need to install the dependencies yourself on your host OS. These can be seen in the [Dockerfile](./Dockerfile) and the [requirements.txt](./app/requirements.txt)
 
 #### Tips
 If you want to persist the changes, make sure to update the requirements.txt when it comes to python packages and add any external dependencies to the [Dockerfile](./Dockerfile).
