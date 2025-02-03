@@ -172,8 +172,8 @@ row = ad_df.iloc[0]
 display_results(row, 'transcript', 'Transcript', INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS)
 
 ########################################################
-# ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
-ocr_text = 'THREE YEARS LATER AC Coming to Things Clydesdales Budweiser Chicago 7605 JV Kc CLYDESDALES RESPONSIBLY 02013 ANHEUSER BEER St Louis MO'
+ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
+# ocr_text = 'THREE YEARS LATER AC Coming to Things Clydesdales Budweiser Chicago 7605 JV Kc CLYDESDALES RESPONSIBLY 02013 ANHEUSER BEER St Louis MO'
 ad_df["ocr_text"] = ocr_text
 ad_df = ta.process_pronoun_data(ad_df, 'ocr_text')
 ad_df = ta.process_text_data(ad_df, 'ocr_text')
