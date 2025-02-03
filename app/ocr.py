@@ -10,6 +10,7 @@ import enchant
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
 import logging
+import gc  # Import garbage collector interface
 
 
 logging.basicConfig(
@@ -341,7 +342,9 @@ def process_all_ads(input_folder):
 
 
 def ocr(video_path: str):
-  text = process_all_ads(video_path)
-  print("cleaned_text:", text)
-  return text
+    # Attempt to clear VRAM by deleting large objects and collecting garbage
+    gc.collect()
+    text = process_all_ads(video_path)
+    print("cleaned_text:", text)
+    return text
 

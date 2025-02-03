@@ -37,43 +37,6 @@ from sklearn.metrics import (
 
 import shap
 
-def remove_unwanted_columns(df):
-  # Store original columns before removal
-  original_columns = df.columns.tolist()
-
-  # Remove columns which aren't numbers or categorical
-  df = df.select_dtypes(include=['number', 'category'])
-  columns_to_remove = [
-        'transcript_superlative_count',
-        'transcript_comparative_count',
-        'transcript_uniqueness_count',
-        'transcript_total_bdm_terms_count',
-        'ocr_text_superlative_count',
-        'ocr_text_comparative_count',
-        'ocr_text_uniqueness_count',
-        'ocr_text_total_bdm_terms_count',
-        'transcript_num_comparisons',
-        'ocr_text_num_comparisons',
-        'product_cat_name',
-        'brand',
-        'product_brand_name'
-    ]
-  # remove these if they are in the dataframe
-  df = df.drop(columns=[col for col in columns_to_remove if col in df.columns])
-
-  # Determine which columns were removed
-  removed_columns = [col for col in original_columns if col not in df.columns]
-
-  # Display removed columns
-  print("Removed columns:", removed_columns)
-    # print categorical columns
-  print(f"Categorical columns: {df.select_dtypes(include=['category']).columns}")
-  print(f"Integer columns: {df.select_dtypes(include=['int']).columns}")
-  print(f"Float columns: {df.select_dtypes(include=['float']).columns}")
-  # print columns with all other types
-  print(f"Other columns: {df.select_dtypes(include=['object']).columns}")
-  return df
-
 
 def get_base_models():
     """Return dictionary of base model configurations"""
@@ -350,74 +313,38 @@ def plot_correlation_with_target(X, y):
     plt.show()
 
 
-def predict_for_confusion_matrices(X, models):
-    """
-    Predict labels for each model to be used in confusion matrices.
-    
-    Parameters:
-    - X: Feature matrix
-    - models: Dictionary of tuned models
-    
-    Returns:
-    - predictions: Dictionary of predictions for each model
-    """
-    predictions = {}
-    for name, model in models.items():
-        predictions[name] = model.predict(X)
-    return predictions
+
 
 def plot_confusion_matrices(X, y, predictions):
+    colors = ['#AFCAE2', '#F1BEA1', '#5694CE', '#E4E1DA', '#A4CD91', '#C6D6C5']
+    sns.set_palette(colors)
     """
-    Plot confusion matrices with percentages and fractions for each model.
+    Plot confusion matrices with absolute numbers and percentages for each model.
     
     Parameters:
     - X: Feature matrix
     - y: Target variable
     - predictions: Dictionary of predictions for each model
     """
-    n_models = len(predictions)
-    fig, axes = plt.subplots(
-        nrows=(n_models + 1) // 2, 
-        ncols=2, 
-        figsize=(16, 4 * ((n_models + 1) // 2))
-    )
-    axes = axes.ravel()  # Flatten axes array
-    
-    for i, (name, y_pred) in enumerate(predictions.items()):
-        # Compute confusion matrix
+    # Iterate over each model's predictions
+    for name, y_pred in predictions.items():
+        # Calculate the confusion matrix
         cm = confusion_matrix(y, y_pred)
+        # Normalize the confusion matrix to show percentages
+        cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         
-        # Convert to percentages and fractions for annotations
-        total_negatives = cm[0, 0] + cm[0, 1]  # TN + FN
-        total_positives = cm[1, 0] + cm[1, 1]  # TP + FP
+        # Combine absolute and normalized values for annotation
+        labels = (np.asarray(["{0:0.0f}\n({1:.2%})".format(value, value_norm)
+                              for value, value_norm in zip(cm.flatten(), cm_normalized.flatten())])
+                  .reshape(cm.shape))
         
-        annotations = np.array([
-            [f"{cm[0, 0] / total_negatives * 100:.1f}%\n({cm[0, 0]}/{total_negatives})" if total_negatives > 0 else "0% (0/0)",  # TN %
-             f"{cm[0, 1] / total_negatives * 100:.1f}%\n({cm[0, 1]}/{total_negatives})" if total_negatives > 0 else "0% (0/0)"],  # FN %
-            [f"{cm[1, 0] / total_positives * 100:.1f}%\n({cm[1, 0]}/{total_positives})" if total_positives > 0 else "0% (0/0)",  # FP %
-             f"{cm[1, 1] / total_positives * 100:.1f}%\n({cm[1, 1]}/{total_positives})" if total_positives > 0 else "0% (0/0)"]   # TP %
-        ])
-        
-        # Plot confusion matrix using numerical data
-        sns.heatmap(
-            cm, 
-            annot=annotations, 
-            fmt='', 
-            cmap='Blues', 
-            ax=axes[i], 
-            xticklabels=['Negative', 'Positive'], 
-            yticklabels=['Negative', 'Positive']
-        )
-        axes[i].set_title(f'{name}')
-        axes[i].set_xlabel('Predicted Label')
-        axes[i].set_ylabel('True Label')
-    
-    # Remove extra subplots if any
-    for j in range(i + 1, len(axes)):
-        fig.delaxes(axes[j])
-    
-    plt.tight_layout()
-    plt.show()
+        # Plotting
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(cm, annot=labels, fmt="", cmap='Blues', annot_kws={"size": 22}) 
+        plt.title(f"Confusion Matrix for {name}")
+        plt.xlabel('Predicted label')
+        plt.ylabel('True label') 
+        plt.show()
 
 
 def analyze_decision_tree(data, target, models):
@@ -466,8 +393,23 @@ def display_model_results(data, target, models, results_df, predictions):
     display(Markdown("## Confusion Matrices:\n"))
     plot_confusion_matrices(data, target, predictions)
 
-def assign_data_types(df):
-    boolean_columns = [
+def prepare_df_for_modeling(df):
+    columns_to_remove = [
+        # 'transcript_superlative_count',
+        # 'transcript_comparative_count',
+        # 'transcript_uniqueness_count',
+        # 'transcript_total_bdm_terms_count',
+        # 'ocr_text_superlative_count',
+        # 'ocr_text_comparative_count',
+        # 'ocr_text_uniqueness_count',
+        # 'ocr_text_total_bdm_terms_count',
+        # 'transcript_num_comparisons',
+        # 'ocr_text_num_comparisons',
+        # 'product_cat_name',
+        # 'brand',
+        # 'product_brand_name'
+    ]
+    boolean_columns_to_keep = [
     'csr_type',
     'BDM',
     'encoded_emotion',
@@ -486,7 +428,7 @@ def assign_data_types(df):
     'transcript_contains_they',
     ]
 
-    integer_columns = [
+    integer_columns_to_keep = [
         'transcript_superlative_count',
         'transcript_comparative_count',
         'transcript_uniqueness_count',
@@ -500,7 +442,7 @@ def assign_data_types(df):
         'transcript_num_comparisons',
         'ocr_text_num_comparisons',
     ]
-    float_columns = [
+    float_columns_to_keep = [
         'transcript_superlative_pct',
         'transcript_comparative_pct',
         'transcript_uniqueness_pct',
@@ -515,22 +457,25 @@ def assign_data_types(df):
         'ocr_text_product_brand_keywords_similarity',
 
     ]
-    text_columns = [
+    text_columns_to_keep = [
         'commercial_number',
     ]
 
-    for col in integer_columns:
+    for col in integer_columns_to_keep:
         if col in df.columns:
             df[col] = df[col].astype(int)
 
-    for col in float_columns:
+    for col in float_columns_to_keep:
         if col in df.columns:
             df[col] = df[col].astype(float)
-    for col in boolean_columns:
+    for col in boolean_columns_to_keep:
         if col in df.columns:
             df[col] = df[col].astype(int)
-    for col in text_columns:
+    for col in text_columns_to_keep:
         if col in df.columns:
             df[col] = df[col].astype(str)
-    df = df.loc[:, (df.columns.isin(boolean_columns) | df.columns.isin(integer_columns) | df.columns.isin(float_columns) | df.columns.isin(text_columns))]
+    df = df.loc[:, (df.columns.isin(boolean_columns_to_keep) | df.columns.isin(integer_columns_to_keep) | df.columns.isin(float_columns_to_keep) | df.columns.isin(text_columns_to_keep))]
+
+    # lastly sort the columns alphabetically
+    df = df.reindex(sorted(df.columns), axis=1)
     return df
