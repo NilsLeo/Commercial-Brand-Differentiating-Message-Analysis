@@ -34,11 +34,7 @@ Due to the small number of Ads, we used a machine learning approach, with manual
 - [License](#license)
 
 ## Getting Started
-
-**Video Tutorial**
-[Watch Tutorial](./video_tutorial.mp4)
-
-
+https://github.com/user-attachments/assets/d8b9f198-974f-4928-a6dc-fa378379d23c
 
 ### Prerequisites
 - Docker
