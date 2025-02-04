@@ -36,11 +36,10 @@ Due to the small number of Ads, we used a machine learning approach, with manual
 ## Getting Started
 
 **Video Tutorial**
+[![Watch Tutorial](https://www.flaticon.com/free-icon/video_4404094#)]
+(https://github.com/NilsLeo/Commercial-Brand-Differentiating-Message-Analysis/raw/refs/heads/main/video_tutorial.mp4)
 
-<video controls width="600">
-  <source src="./video_tutorial.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+
 
 ### Prerequisites
 - Docker
