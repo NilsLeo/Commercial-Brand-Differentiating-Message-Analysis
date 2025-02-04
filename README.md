@@ -34,6 +34,14 @@ Due to the small number of Ads, we used a machine learning approach, with manual
 - [License](#license)
 
 ## Getting Started
+
+**Video Tutorial**
+
+<video controls width="600">
+  <source src="./video_tutorial.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ### Prerequisites
 - Docker
 - docker-compose
