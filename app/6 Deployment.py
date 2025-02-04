@@ -115,17 +115,24 @@ def display_results(row, text_column, header, INDUSTRY_SPECIFIC_AWARENESS, BRAND
 
 
     if BRAND_SPECIFIC_AWARENESS:
-        st.markdown(f"#### Brand Match")
-        # st.info(f'Here is the comparison of the {header} with the keywords!', icon="🔍")
-        # st.markdown(f"**Brand**: {product_brand}")
-        # st.markdown("**Keywords**:")
-    #     st.code(', '.join(keyword.strip() for keyword in ad_df[f"product_brand_keywords"].iloc[0].split(', ')))
-    #     st.markdown("##### **Top Matching Keywords:**")
-    #     st.code(', '.join(keyword.strip() for keyword in ad_df[f"{text_column}_product_brand_keywords_top_keywords"].iloc[0].split(', ')))
-    #     st.markdown("##### Average Semantic Similarity of top 3")
-    #     st.metric('',f"{ad_df[f'{text_column}_product_brand_keywords_similarity'].values[0]}")
-    #     st.progress(ad_df[f'{text_column}_product_brand_keywords_similarity'].values[0])
-        
+            st.markdown(f"#### Brand Match")
+            st.info(f'Here is the comparison of the {header} with the keywords!', icon="🔍")
+            st.markdown(f"**Brand**: {product_brand}")
+            # replace ' and [ ] with ''
+            all_keywords = ad_df[f"product_brand_keywords"].iloc[0]
+            all_keywords = str(all_keywords)
+            all_keywords = all_keywords.replace("'", "").replace("[", "").replace("]", "").split(', ')
+            with st.expander("See All Keywords"):
+                for keyword in all_keywords:
+                    st.write(f"- {keyword}")
+            st.markdown("##### **Top Matching Keywords:**")
+            keywords = ad_df[f"{text_column}_product_brand_keywords_top_keywords"].iloc[0].split(', ')
+            for keyword in keywords:
+                st.write(f"- {keyword}")
+            st.markdown("##### **Average Semantic Similarity of top 3**")
+            st.metric('',f"{ad_df[f'{text_column}_product_brand_keywords_similarity'].values[0]}")
+            st.progress(ad_df[f'{text_column}_product_brand_keywords_similarity'].values[0])
+
 
 st.markdown("###  Video Upload")
 uploaded_file = st.file_uploader("Upload a Video of a Commercial to get started", type=["mp4"])
