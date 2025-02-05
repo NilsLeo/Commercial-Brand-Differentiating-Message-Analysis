@@ -209,10 +209,10 @@ row = ad_df.iloc[0]
 display_results(row, 'transcript', 'Transcript', INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS)
 
 ########################################################
-ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
-# ocr_text = 'THREE YEARS LATER AC Coming to Things Clydesdales Budweiser Chicago 7605 JV Kc CLYDESDALES RESPONSIBLY 02013 ANHEUSER BEER St Louis MO'
+# ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
+ocr_text = 'THREE YEARS LATER AC Coming to Things Clydesdales Budweiser Chicago 7605 JV Kc CLYDESDALES RESPONSIBLY 02013 ANHEUSER BEER St Louis MO'
 ad_df["ocr_text"] = ocr_text
-ad_df = ta.process_pronoun_data(ad_df, 'ocr_text')
+# ad_df = ta.process_pronoun_data(ad_df, 'ocr_text')
 ad_df = ta.process_text_data(ad_df, 'ocr_text')
 ad_df["ocr_text_adj_noun_pairs"] = ad_df["ocr_text"].apply(ta.extract_adj_noun_pairs)
 ad_df["ocr_text_num_adj_noun_pairs"] = ad_df["ocr_text_adj_noun_pairs"].apply(len)
@@ -231,8 +231,8 @@ ad_df['ocr_text_contains_our'] = ad_df['ocr_text'].apply(ta.contains_our)
 ad_df['ocr_text_contains_ours'] = ad_df['ocr_text'].apply(ta.contains_ours)
 ad_df['ocr_text_contains_your'] = ad_df['ocr_text'].apply(ta.contains_your)
 ad_df['ocr_text_contains_yours'] = ad_df['ocr_text'].apply(ta.contains_yours)
-ad_df['transcript_contains_his'] = ad_df['transcript'].apply(ta.contains_his)
-ad_df['transcript_contains_her'] = ad_df['transcript'].apply(ta.contains_her)
+ad_df['ocr_text_contains_his'] = ad_df['ocr_text'].apply(ta.contains_his)
+ad_df['ocr_text_contains_her'] = ad_df['ocr_text'].apply(ta.contains_her)
 ad_df['ocr_text_contains_its'] = ad_df['ocr_text'].apply(ta.contains_its)
 ad_df['ocr_text_contains_their'] = ad_df['ocr_text'].apply(ta.contains_their)
 ad_df['ocr_text_contains_theirs'] = ad_df['ocr_text'].apply(ta.contains_theirs)
