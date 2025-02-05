@@ -1,5 +1,6 @@
 
 app/.venv
+app/decision_tree_high_def.svg
 app/log.log
 app/.ipynb_checkpoints
 app/__pycache__

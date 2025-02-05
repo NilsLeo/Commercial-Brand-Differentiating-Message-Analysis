@@ -68,7 +68,7 @@ if BRAND_SPECIFIC_AWARENESS:
     
 # Display found pronouns on the frontend, differentiated by source
 def display_results(row, text_column, header, INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS):
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Total Words", row[f'{text_column}_word_count'])
         st.metric("BDM Terms", row[f'{text_column}_total_bdm_terms_count'])
@@ -90,10 +90,27 @@ def display_results(row, text_column, header, INDUSTRY_SPECIFIC_AWARENESS, BRAND
         st.markdown("**Adjective-Noun Pairs**")
         st.markdown(f"Count: {row[f'{text_column}_num_adj_noun_pairs']}")
         st.markdown(f"> {', '.join(row[f'{text_column}_adj_noun_pairs']) if row[f'{text_column}_adj_noun_pairs'] else 'None found'}")
-        st.markdown("**Most Common Pronoun**")
-        st.markdown(f"Pronoun: {row[f'{text_column}_most_common_pronoun']}")
-        st.markdown(f"Count: {row[f'{text_column}_most_common_pronoun_count']}")
-        st.markdown(f"Percentage: {row[f'{text_column}_most_common_pronoun_pct']:.1f}%")
+    with col4:
+        st.markdown("**Pronouns Found**")
+        st.markdown("I" if row[f'{text_column}_contains_i'] else "")
+        st.markdown("We" if row[f'{text_column}_contains_we'] else "")
+        st.markdown("You" if row[f'{text_column}_contains_you'] else "")
+        st.markdown("He" if row[f'{text_column}_contains_he'] else "")
+        st.markdown("She" if row[f'{text_column}_contains_she'] else "")
+        st.markdown("It" if row[f'{text_column}_contains_it'] else "")
+        st.markdown("They" if row[f'{text_column}_contains_they'] else "")
+        st.markdown("My" if row[f'{text_column}_contains_my'] else "")
+        st.markdown("Our" if row[f'{text_column}_contains_our'] else "")
+        st.markdown("Yours" if row[f'{text_column}_contains_yours'] else "")
+        st.markdown("His" if row[f'{text_column}_contains_his'] else "")
+        st.markdown("Her" if row[f'{text_column}_contains_her'] else "")
+        st.markdown("Its" if row[f'{text_column}_contains_its'] else "")
+        st.markdown("Their" if row[f'{text_column}_contains_their'] else "")
+        st.markdown("Ours" if row[f'{text_column}_contains_ours'] else "")
+        st.markdown("Your" if row[f'{text_column}_contains_your'] else "")
+        
+        
+
     if INDUSTRY_SPECIFIC_AWARENESS:
             st.markdown(f"#### Industry Match")
             st.info(f'Here is the comparison of the {header} with the keywords!', icon="🔍")
@@ -154,6 +171,7 @@ transcript = transcribe_video(f"{os.path.dirname(os.path.abspath(__file__))}/upl
 ad_df["transcript"] = transcript
 ad_df["transcript_adj_noun_pairs"] = ad_df["transcript"].apply(ta.extract_adj_noun_pairs)
 ad_df["transcript_num_adj_noun_pairs"] = ad_df["transcript_adj_noun_pairs"].apply(len)
+
 ad_df['transcript_contains_i'] = ad_df['transcript'].apply(ta.contains_i)
 ad_df['transcript_contains_we'] = ad_df['transcript'].apply(ta.contains_we)
 ad_df['transcript_contains_you'] = ad_df['transcript'].apply(ta.contains_you)
@@ -161,6 +179,19 @@ ad_df['transcript_contains_he'] = ad_df['transcript'].apply(ta.contains_he)
 ad_df['transcript_contains_she'] = ad_df['transcript'].apply(ta.contains_she)
 ad_df['transcript_contains_it'] = ad_df['transcript'].apply(ta.contains_it)
 ad_df['transcript_contains_they'] = ad_df['transcript'].apply(ta.contains_they)
+ad_df['transcript_contains_us'] = ad_df['transcript'].apply(ta.contains_us)
+ad_df['transcript_contains_them'] = ad_df['transcript'].apply(ta.contains_them)
+ad_df['transcript_contains_my'] = ad_df['transcript'].apply(ta.contains_my)
+ad_df['transcript_contains_our'] = ad_df['transcript'].apply(ta.contains_our)
+ad_df['transcript_contains_ours'] = ad_df['transcript'].apply(ta.contains_ours)
+ad_df['transcript_contains_your'] = ad_df['transcript'].apply(ta.contains_your)
+ad_df['transcript_contains_yours'] = ad_df['transcript'].apply(ta.contains_yours)
+ad_df['transcript_contains_his'] = ad_df['transcript'].apply(ta.contains_his)
+ad_df['transcript_contains_her'] = ad_df['transcript'].apply(ta.contains_her)
+ad_df['transcript_contains_its'] = ad_df['transcript'].apply(ta.contains_its)
+ad_df['transcript_contains_their'] = ad_df['transcript'].apply(ta.contains_their)
+ad_df['transcript_contains_theirs'] = ad_df['transcript'].apply(ta.contains_theirs)
+
 ad_df["transcript_comparisons"] = ad_df["transcript"].apply(ta.apply_on_transcript)
 ad_df["transcript_num_comparisons"] = ad_df["transcript_comparisons"].apply(len)
 
@@ -170,7 +201,6 @@ if INDUSTRY_SPECIFIC_AWARENESS:
 if BRAND_SPECIFIC_AWARENESS:
     ad_df = ta.calculate_semantic_similarities(ad_df, 'transcript', 'product_brand_keywords')
 
-ad_df= ta.process_pronoun_data(ad_df, 'transcript')
 ad_df = ta.process_text_data(ad_df, 'transcript')
 st.markdown("## Transcript")
 st.info('We have transcribe the following audio from the file you uploaded!', icon="🎙️")
@@ -186,6 +216,7 @@ ad_df = ta.process_pronoun_data(ad_df, 'ocr_text')
 ad_df = ta.process_text_data(ad_df, 'ocr_text')
 ad_df["ocr_text_adj_noun_pairs"] = ad_df["ocr_text"].apply(ta.extract_adj_noun_pairs)
 ad_df["ocr_text_num_adj_noun_pairs"] = ad_df["ocr_text_adj_noun_pairs"].apply(len)
+
 ad_df['ocr_text_contains_i'] = ad_df['ocr_text'].apply(ta.contains_i)
 ad_df['ocr_text_contains_we'] = ad_df['ocr_text'].apply(ta.contains_we)
 ad_df['ocr_text_contains_you'] = ad_df['ocr_text'].apply(ta.contains_you)
@@ -193,6 +224,19 @@ ad_df['ocr_text_contains_he'] = ad_df['ocr_text'].apply(ta.contains_he)
 ad_df['ocr_text_contains_she'] = ad_df['ocr_text'].apply(ta.contains_she)
 ad_df['ocr_text_contains_it'] = ad_df['ocr_text'].apply(ta.contains_it)
 ad_df['ocr_text_contains_they'] = ad_df['ocr_text'].apply(ta.contains_they)
+ad_df['ocr_text_contains_us'] = ad_df['ocr_text'].apply(ta.contains_us)
+ad_df['ocr_text_contains_them'] = ad_df['ocr_text'].apply(ta.contains_them)
+ad_df['ocr_text_contains_my'] = ad_df['ocr_text'].apply(ta.contains_my)
+ad_df['ocr_text_contains_our'] = ad_df['ocr_text'].apply(ta.contains_our)
+ad_df['ocr_text_contains_ours'] = ad_df['ocr_text'].apply(ta.contains_ours)
+ad_df['ocr_text_contains_your'] = ad_df['ocr_text'].apply(ta.contains_your)
+ad_df['ocr_text_contains_yours'] = ad_df['ocr_text'].apply(ta.contains_yours)
+ad_df['transcript_contains_his'] = ad_df['transcript'].apply(ta.contains_his)
+ad_df['transcript_contains_her'] = ad_df['transcript'].apply(ta.contains_her)
+ad_df['ocr_text_contains_its'] = ad_df['ocr_text'].apply(ta.contains_its)
+ad_df['ocr_text_contains_their'] = ad_df['ocr_text'].apply(ta.contains_their)
+ad_df['ocr_text_contains_theirs'] = ad_df['ocr_text'].apply(ta.contains_theirs)
+
 ad_df["ocr_text_comparisons"] = ad_df["ocr_text"].apply(ta.apply_on_transcript)
 ad_df["ocr_text_num_comparisons"] = ad_df["ocr_text_comparisons"].apply(len)
 

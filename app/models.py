@@ -308,7 +308,7 @@ def plot_correlation_with_target(X, y):
     
     # Plot the heatmap
     plt.figure(figsize=(12, 8))
-    sns.heatmap(correlation_matrix[['target']], annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+    sns.heatmap(correlation_matrix[['target']], annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5, annot_kws={"size": 16})
     plt.title("Correlation between Features and Target", fontsize=16)
     plt.show()
 
@@ -370,69 +370,82 @@ def analyze_decision_tree(data, target, models):
         print(f"{f + 1}. {data.columns[indices[f]]}: {importances[indices[f]]:.3f}")
 
 
-def display_xai(data, target):
-  X = data
-  y = target
-  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-  rf = RandomForestClassifier(n_estimators=30, max_depth=20, random_state=0, max_features='sqrt',\
-                              class_weight='balanced')
-  rf.fit(X_train, y_train)
-  y_pred_test = rf.predict(X_test)
-  samples = X_train
-  explainer = shap.TreeExplainer(rf)
-  shap_values = explainer.shap_values(X_train, approximate=False, check_additivity=False)
-  shap_values_class_1 = shap_values[:, :, 1]
-  shap.summary_plot(shap_values_class_1, X_train)
+def display_xai(data, target, model):
+    X = data
+    y = target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Use the provided model instead of creating a new RandomForestClassifier
+    model.fit(X_train, y_train)
+    y_pred_test = model.predict(X_test)
+    samples = X_train
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_train, approximate=False, check_additivity=False)
+    shap_values_class_1 = shap_values[:, :, 1]
+    shap.summary_plot(shap_values_class_1, X_train, max_display=12)  # Show only top 15 features
 
 def display_model_results(data, target, models, results_df, predictions):
 
     display(Markdown("## Cross-Validation Results:\n"))
     display(results_df)
     display(Markdown("## XAI:\n"))
-    display_xai(data, target)
+    model = models['Random Forest']
+    dct = models['Decision Tree']
+    # display the decision tree
+    display_decision_tree(data, target, dct)
+    display_xai(data, target, model)
     display(Markdown("## Confusion Matrices:\n"))
     plot_confusion_matrices(data, target, predictions)
 
-def prepare_df_for_modeling(df):
-    columns_to_remove = [
-        # 'transcript_superlative_count',
-        # 'transcript_comparative_count',
-        # 'transcript_uniqueness_count',
-        # 'transcript_total_bdm_terms_count',
-        # 'ocr_text_superlative_count',
-        # 'ocr_text_comparative_count',
-        # 'ocr_text_uniqueness_count',
-        # 'ocr_text_total_bdm_terms_count',
-        # 'transcript_num_comparisons',
-        # 'ocr_text_num_comparisons',
-        # 'product_cat_name',
-        # 'brand',
-        # 'product_brand_name'
-    ]
+
+def prepare_df_for_modeling(df, only_important_columns=False):
     boolean_columns_to_keep = [
     'csr_type',
     'BDM',
     'encoded_emotion',
-    'transcript_contains_i',
-    'ocr_text_contains_i',
-    'transcript_contains_we',
-    'ocr_text_contains_we',
-    'transcript_contains_you',
-    'ocr_text_contains_you',
-    'transcript_contains_he',
-    'ocr_text_contains_he',
-    'transcript_contains_she',
-    'ocr_text_contains_she',
-    'transcript_contains_it',
-    'ocr_text_contains_it',
-    'transcript_contains_they',
+    'transcript_contains_i', 
+    'ocr_text_contains_i', 
+    'transcript_contains_we', 
+    'ocr_text_contains_we', 
+    'transcript_contains_you', 
+    'ocr_text_contains_you', 
+    'transcript_contains_he', 
+    'ocr_text_contains_he', 
+    'transcript_contains_she', 
+    'ocr_text_contains_she', 
+    'transcript_contains_it', 
+    'ocr_text_contains_it', 
+    'transcript_contains_they', 
+    'ocr_text_contains_they', 
+    'transcript_contains_us', 
+    'ocr_text_contains_us', 
+    'transcript_contains_them', 
+    'ocr_text_contains_them', 
+    'transcript_contains_my', 
+    'ocr_text_contains_my', 
+    'transcript_contains_our', 
+    'ocr_text_contains_our', 
+    'transcript_contains_ours', 
+    'ocr_text_contains_ours', 
+    'transcript_contains_your', 
+    'ocr_text_contains_your', 
+    'transcript_contains_yours', 
+    'ocr_text_contains_yours', 
+    'transcript_contains_his', 
+    'ocr_text_contains_his', 
+    'transcript_contains_her',
+    'ocr_text_contains_her',
+    'transcript_contains_its',
+    'ocr_text_contains_its',
+    'transcript_contains_their',
+    'ocr_text_contains_their',
+    'transcript_contains_theirs',
+    'ocr_text_contains_theirs',
     ]
 
     integer_columns_to_keep = [
         'transcript_superlative_count',
         'transcript_comparative_count',
         'transcript_uniqueness_count',
-        'transcript_total_bdm_terms_count',
         'ocr_text_superlative_count',
         'ocr_text_comparative_count',
         'ocr_text_uniqueness_count',
@@ -444,9 +457,7 @@ def prepare_df_for_modeling(df):
     ]
     float_columns_to_keep = [
         'transcript_superlative_pct',
-        'transcript_comparative_pct',
         'transcript_uniqueness_pct',
-        'transcript_total_bdm_terms_pct',
         'ocr_text_superlative_pct',
         'ocr_text_comparative_pct',
         'ocr_text_uniqueness_pct',
@@ -476,6 +487,44 @@ def prepare_df_for_modeling(df):
             df[col] = df[col].astype(str)
     df = df.loc[:, (df.columns.isin(boolean_columns_to_keep) | df.columns.isin(integer_columns_to_keep) | df.columns.isin(float_columns_to_keep) | df.columns.isin(text_columns_to_keep))]
 
+    important_columns = [
+        'commercial_number',
+        'transcript_product_cat_keywords_similarity', 
+        'transcript_product_brand_keywords_similarity',
+        'transcript_contains_you',
+        'transcript_num_adj_noun_pairs',
+        'transcript_contains_your',
+        'transcript_contains_it',
+        'csr_type',
+        'transcript_total_bdm_terms_pct',
+        'transcript_num_comparisons',
+        'transcript_contains_we',
+        'transcript_contains_us',
+        'BDM'
+        ]
+    if only_important_columns:
+        df = df.loc[:, df.columns.isin(important_columns)]
     # lastly sort the columns alphabetically
     df = df.reindex(sorted(df.columns), axis=1)
     return df
+
+def display_decision_tree(data, target, model):
+    """
+    Display the decision tree visualization.
+    
+    Parameters:
+    - data: Feature matrix (pandas DataFrame)
+    - target: Target variable (pandas Series or numpy array)
+    - model: Decision tree model instance
+    """
+    model.fit(data, target)  # Ensure the model is fitted
+
+    # Create a new figure for the decision tree
+    plt.figure(figsize=(20, 10))
+    plot_tree(model, 
+              filled=True, 
+              feature_names=data.columns, 
+              class_names=['No BDM', 'BDM'])
+    plt.title("Decision Tree Visualization")
+    plt.savefig("decision_tree_high_def.svg", format='svg')  # Save as SVG
+    plt.show()

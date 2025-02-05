@@ -22,7 +22,7 @@ logging.basicConfig(
 nltk.download('all')
 nlp = spacy.load("en_core_web_sm")
 # Define an Enum for personal pronouns
-class Pronoun(Enum):
+class PersonalPronoun(Enum):
     I = 'I'
     WE = 'we'
     YOU = 'you'
@@ -33,7 +33,20 @@ class Pronoun(Enum):
     US = 'us'
     THEM = 'them'
 
+# Define an Enum for possessive pronouns
+class PossessivePronoun(Enum):
+    MY = 'my'
+    OUR = 'our'
+    OURS = 'ours'
+    YOUR = 'your'
+    YOURS = 'yours'
+    HIS = 'his'
+    HER = 'her'
+    ITS = 'its'
+    THEIR = 'their'
+    THEIRS = 'theirs'
 
+    
 def get_unique_words(text):
     dict = {
       'unique', 'exclusive', 'only', 'revolutionary', 'innovative', 'leading',
@@ -150,22 +163,6 @@ def calculate_semantic_similarities(df, text_column, keyword_column):
     return df
 
 # Function to get statistics of the most common personal pronoun
-def get_dominant_pronoun_stats(transcript):
-    # Extract pronouns from the transcript using regex
-    found_pronouns = re.findall(r'\b(?:' + '|'.join([pronoun.value for pronoun in Pronoun]) + r')\b', transcript, flags=re.IGNORECASE)
-    
-    # Count the occurrences of each pronoun
-    pronoun_counts = Counter(found_pronouns)
-    
-    # Find the most common pronoun and its count
-    if pronoun_counts:
-        most_common_pronoun, most_common_count = pronoun_counts.most_common(1)[0]
-        total_pronouns = sum(pronoun_counts.values())
-        relative_amount = (most_common_count / total_pronouns) * 100  # Calculate percentage
-        return most_common_pronoun.lower(), most_common_count, relative_amount
-    else:
-        return 'none', 0, 0.0
-    
 def process_text_data(df, text_column):
     df[f'{text_column}_word_count'] = 0
     df[f'{text_column}_superlative_count'] = 0
@@ -207,14 +204,6 @@ def process_text_data(df, text_column):
 
     return df
 
-def process_pronoun_data(df, text_column):
-    for idx, row in df.iterrows():
-        text = row[text_column]
-        most_common_pronoun, most_common_pronoun_count, most_common_pronoun_pct = get_dominant_pronoun_stats(text)
-        df.at[idx, f'{text_column}_most_common_pronoun'] = most_common_pronoun
-        df.at[idx, f'{text_column}_most_common_pronoun_count'] = most_common_pronoun_count
-        df.at[idx, f'{text_column}_most_common_pronoun_pct'] = most_common_pronoun_pct
-    return df
 
 
 
@@ -328,3 +317,76 @@ def contains_they(transcript):
     if not isinstance(transcript, str) or not transcript:
         return False
     return 'they' in re.findall(r'\bTHEY\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'us' in the transcript
+def contains_us(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'us' in re.findall(r'\bUS\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'them' in the transcript
+def contains_them(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'them' in re.findall(r'\bTHEM\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'my' in the transcript
+def contains_my(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'my' in re.findall(r'\bMY\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'our' in the transcript
+def contains_our(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'our' in re.findall(r'\bOUR\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'ours' in the transcript
+def contains_ours(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'ours' in re.findall(r'\bOURS\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'your' in the transcript
+def contains_your(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'your' in re.findall(r'\bYOUR\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'yours' in the transcript
+def contains_yours(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'yours' in re.findall(r'\bYOURS\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'his' in the transcript
+def contains_his(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'his' in re.findall(r'\bHIS\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'her' in the transcript
+def contains_her(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'her' in re.findall(r'\bHER\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'its' in the transcript
+def contains_its(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'its' in re.findall(r'\bITS\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'their' in the transcript
+def contains_their(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'their' in re.findall(r'\bTHEIR\b', transcript, flags=re.IGNORECASE)
+
+# Function to check for the presence of 'theirs' in the transcript
+def contains_theirs(transcript):
+    if not isinstance(transcript, str) or not transcript:
+        return False
+    return 'theirs' in re.findall(r'\bTHEIRS\b', transcript, flags=re.IGNORECASE)
+
