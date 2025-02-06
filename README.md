@@ -4,21 +4,20 @@
   <img src="./images/SuperBowl.png" alt="Super Bowl" width="300"/>
 </div>
 
-This University Project aims to provide a Framework which can be used to analyse a commercial and identify whether or not this commercial contains a Brand Differentiating Message (BDM). [This Spreadsheet](BDM.xlsx) contains a list of Superbowl Ads which are labeled with either 1 (BDM) or 0 (No BDM) by the marketing faculty of my University. Due to limitations in Data Quality (Subjectivity, Binary Classification) and Quantity (only a few hundred ads, class imbalance), this project should be considered as more of a conceptual approach, rather than a model with a high accuracy.
+This University Project aims to provide a Framework which can be used to analyse a commercial and identify whether or not this commercial contains a Brand Differentiating Message (BDM). [This Spreadsheet](./app/BDM.xlsx) contains a list of Superbowl Ads which are labeled with either 1 (BDM) or 0 (No BDM) by the marketing faculty of my University. Due to limitations in Data Quality (Subjectivity, Binary Classification) and Quantity (only a few hundred ads, class imbalance), this project should be considered as more of a conceptual approach, rather than a model with a high accuracy.
+
+Due to the small number of Ads, we used a machine learning approach, with manually engineered features, rather than just passing text through to a neural network.
 
 ## CRISP-DM
 
 This Project is structured using the CRISP-DM Framework
 
-### 1 Business Understanding
-### 2 Data Understanding
+### Data Understanding
 [Jupyter Notebook](<./app/2 - Data Understanding.ipynb>)
-### 3 Data Preparation, 4 Modeling, 5 Evaluation
+### Data Preparation, Modeling, Evaluation
 [Jupyter Notebook](<./app/3-5 Data Preparation, Modeling, Evaluation.ipynb>)
-### 6 Deployment
+### Deployment
 [Webapp](<./app/6 Deployment.py>)
-
-Due to the small number of Ads, we used a machine learning approach, with manually engineered features, rather than just passing text through to a neural network.
 
 ## Table of Contents
 - [Getting Started](#getting-started)
@@ -39,9 +38,20 @@ https://github.com/user-attachments/assets/d8b9f198-974f-4928-a6dc-fa378379d23c
 ### Prerequisites
 - Docker
 - docker-compose
-- An NVIDIA GPU. This image was tested on an RTX 4070. If you don't have access to one, you will likely need to make some changes to the [Dockerfile](./Dockerfile).
-- Nvidia Container Toolkit. Follow these instructions: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#next-steps
+- (Model Training Only) A URL with the Videos referenced in the model training. This must be added to your local .env file. Copy the [example](./app/.env.example) and adjust the URL
 
+#### System Requirements
+The model was developed on the following System
+
+| Component  | Details                          |
+|------------|----------------------------------|
+| **OS**     | Ubuntu 24.04.1 LTS x86_64       |
+| **Host**   | MS-7E07 1.0                     |
+| **CPU**    | 13th Gen Intel i7-13700K (24) @ 5.500GHz |
+| **GPU**    | NVIDIA GeForce RTX 4070         |
+| **Memory** | 64042 MiB                       |
+
+In in attempt to ensure cross plattform compatibility, a Docker image was created. However this has only been tested on 1 machine and needs to be tested on a broad spectrum of systems to ensure true Cross Plattform Compatibility
 
 ### Installation
 To install, simply run the following command:
@@ -66,17 +76,5 @@ docker exec -it app sh
 jupyter server list
 ```
 This will retrieve the token.
-
-#### Other Editors
-If you prefer to use a different editor, you can work on the files in the [app](./app/) directory outside of the container. You will need to install the dependencies yourself on your host OS. These can be seen in the [Dockerfile](./Dockerfile) and the [requirements.txt](./app/requirements.txt)
-
 #### Tips
-If you want to persist the changes, make sure to update the requirements.txt when it comes to python packages and add any external dependencies to the [Dockerfile](./Dockerfile).
-
-## Contributing
-If you would like to contribute to this project, please feel free to fork the repository, create a feature branch, and then submit a pull request.
-
-## License
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-[^1]: [Nvidia Container Toolkit Installation Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-with-apt)
+If you want to persist the changes, make sure to update the requirements.txt when it comes to python packages and any external dependencies must be added to the [Dockerfile](./Dockerfile).
