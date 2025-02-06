@@ -11,6 +11,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import AdaBoostClassifier
+from sklearn.preprocessing import LabelBinarizer
 # Prepare features
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -36,6 +37,8 @@ from sklearn.metrics import (
 )
 
 import shap
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import learning_curve
 
 
 def get_base_models():
@@ -51,6 +54,43 @@ def get_base_models():
         'AdaBoost': AdaBoostClassifier(random_state=42),
     }
 
+def plot_tree_depth_vs_roc_auc_cv(X, y, max_depth=20, cv=5):
+    """
+    Plots test ROC AUC as a function of tree depth using 5-fold cross-validation.
+
+    Parameters:
+    - X: Feature matrix (input data).
+    - y: Target vector (binary classification labels).
+    - max_depth: Maximum tree depth to evaluate.
+    - cv: Number of cross-validation folds (default is 5).
+    """
+    # Binarize the target labels (in case it's not already binary)
+    lb = LabelBinarizer()
+    y_bin = lb.fit_transform(y).ravel()  # Flatten to 1D array
+
+    # Store average test ROC AUC scores for each fold at each depth
+    test_roc_auc = []
+
+    # Evaluate performance at each tree depth using cross-validation
+    for depth in range(1, max_depth + 1):
+        # Create the decision tree classifier
+        clf = DecisionTreeClassifier(max_depth=depth, random_state=42)
+        
+        # Perform cross-validation on the test set (the validation fold during cross-validation)
+        test_auc_scores = cross_val_score(clf, X, y_bin, cv=cv, scoring='roc_auc')
+        
+        # Append average ROC AUC score
+        test_roc_auc.append(np.mean(test_auc_scores))
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, max_depth + 1), test_roc_auc, label='Test ROC AUC (CV)', marker='o', color='red')
+    plt.xlabel('Tree Depth')
+    plt.ylabel('ROC AUC')
+    plt.title('Decision Tree ROC AUC vs. Depth (5-Fold CV)')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 def get_param_distributions():
     """Return parameter distributions for RandomizedSearchCV"""
@@ -104,6 +144,7 @@ def tune_models(X, y, models, param_distributions, cv=5, n_iter=20):
             tuned_models[name] = random_search.best_estimator_
             print(f"Best parameters: {random_search.best_params_}")
             print(f"Best score: {random_search.best_score_:.3f}")
+
         else:
             tuned_models[name] = model
             
@@ -370,6 +411,7 @@ def analyze_decision_tree(data, target, models):
         print(f"{f + 1}. {data.columns[indices[f]]}: {importances[indices[f]]:.3f}")
 
 
+
 def display_xai(data, target, model):
     X = data
     y = target
@@ -383,16 +425,16 @@ def display_xai(data, target, model):
     shap_values_class_1 = shap_values[:, :, 1]
     shap.summary_plot(shap_values_class_1, X_train, max_display=12)  # Show only top 15 features
 
+
 def display_model_results(data, target, models, results_df, predictions):
 
     display(Markdown("## Cross-Validation Results:\n"))
     display(results_df)
     display(Markdown("## XAI:\n"))
-    model = models['Random Forest']
     dct = models['Decision Tree']
     # display the decision tree
     display_decision_tree(data, target, dct)
-    display_xai(data, target, model)
+    display_xai(data, target, dct)
     display(Markdown("## Confusion Matrices:\n"))
     plot_confusion_matrices(data, target, predictions)
 
