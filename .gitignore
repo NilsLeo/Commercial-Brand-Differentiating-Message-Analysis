@@ -1,4 +1,4 @@
-
+app/.env
 app/.venv
 app/decision_tree_high_def.svg
 app/log.log
