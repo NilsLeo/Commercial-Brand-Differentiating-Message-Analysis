@@ -82,7 +82,9 @@ def display_results(row, text_column, header, INDUSTRY_SPECIFIC_AWARENESS, BRAND
         st.markdown(f"> {''.join(row[f'{text_column}_comparatives']) if row[f'{text_column}_comparatives'] else 'None found'}")
         st.markdown("**Comparisons**")
         st.markdown(f"Count: {row[f'{text_column}_num_comparisons']}")
-        st.markdown(f"> {', '.join(row[f'{text_column}_comparisons']) if row[f'{text_column}_comparisons'] else 'None found'}")
+        # Convert each tuple to a string before joining
+        comparisons = ', '.join(map(str, row[f'{text_column}_comparisons'])) if row[f'{text_column}_comparisons'] else 'None found'
+        st.markdown(f"> {comparisons}")
     with col3:
         st.markdown("**Unique Words**")
         st.markdown(f"Count: {row[f'{text_column}_uniqueness_count']} ({row[f'{text_column}_uniqueness_pct']:.1f}%)")
@@ -209,8 +211,7 @@ row = ad_df.iloc[0]
 display_results(row, 'transcript', 'Transcript', INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS)
 
 ########################################################
-# ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
-ocr_text = 'THREE YEARS LATER AC Coming to Things Clydesdales Budweiser Chicago 7605 JV Kc CLYDESDALES RESPONSIBLY 02013 ANHEUSER BEER St Louis MO'
+ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
 ad_df["ocr_text"] = ocr_text
 # ad_df = ta.process_pronoun_data(ad_df, 'ocr_text')
 ad_df = ta.process_text_data(ad_df, 'ocr_text')
