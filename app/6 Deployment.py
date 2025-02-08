@@ -24,12 +24,20 @@ with cent_co:
 
 st.markdown("## Input Data")
 st.markdown("### Awareness Filters")
-encoded_emotion = st.checkbox("Is the commercial emotional?", key="encoded_emotion_enabled")
-encoded_emotion = 1 if encoded_emotion else 0
+encoded_emotion = st.radio(
+    "Select the emotional appeal of the commercial:",
+    ('Rational', 'Balanced', 'Emotional'),
+    key="encoded_emotion_enabled"
+)
+# Map the selected options to numerical values
+emotion_mapping = {'Rational': 1, 'Balanced': 2, 'Emotional': 3}
+ad_df["rational"] = emotion_mapping[encoded_emotion] == 1
+ad_df["balanced"] = emotion_mapping[encoded_emotion] == 2
+ad_df["emotional"] = emotion_mapping[encoded_emotion] == 3
+
 
 csr_type = st.checkbox("Are there any CSR (Corporate Social Responsibility) elements in the commercial?", key="csr_enabled")
 csr_type = 1 if csr_type else 0
-ad_df["encoded_emotion"] = encoded_emotion
 ad_df["csr_type"] = csr_type
 ad_df["commercial_number"] = 1
 INDUSTRY_SPECIFIC_AWARENESS = st.checkbox("Enable Industry Knowledge", key="industry_enabled")
@@ -169,6 +177,7 @@ if uploaded_file is not None:
     st.video(uploaded_file)
 
 ########################################################
+
 transcript = transcribe_video(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
 ad_df["transcript"] = transcript
 ad_df["transcript_adj_noun_pairs"] = ad_df["transcript"].apply(ta.extract_adj_noun_pairs)
@@ -211,7 +220,9 @@ row = ad_df.iloc[0]
 display_results(row, 'transcript', 'Transcript', INDUSTRY_SPECIFIC_AWARENESS, BRAND_SPECIFIC_AWARENESS)
 
 ########################################################
+
 ocr_text = ocr(f"{os.path.dirname(os.path.abspath(__file__))}/uploaded_file.mp4")
+# ocr_text = "WILL SOUND LIKE THIS 11500 pound FEET Torque PURE DOMINANCE quiet REVOLUTION IS COMING ZERO LIMITS production model shown Initial availability Fall 2021 SEE IT 52020"
 ad_df["ocr_text"] = ocr_text
 # ad_df = ta.process_pronoun_data(ad_df, 'ocr_text')
 ad_df = ta.process_text_data(ad_df, 'ocr_text')
